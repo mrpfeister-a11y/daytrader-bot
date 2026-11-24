@@ -228,6 +228,21 @@ def research():
                 "(the final exam).\n\n```\n" + rep + "\n```")
 
 
+def research_orb():
+    """Big download; errors are emailed but don't fail the job, so downloaded data is kept."""
+    import research_orb as lab
+    try:
+        rep = lab.main()
+        notify.send("stocks-in-play breakout test results",
+                    "The 2023 'Can day trading really be profitable?' strategy, tested on all US stocks "
+                    "since 2016 (dev years) and the last 12 months (final exam).\n\n```\n" + rep + "\n```")
+    except Exception:
+        err = traceback.format_exc()[-2000:]
+        print(err)
+        notify.send("stocks-in-play test stopped", "It will continue from saved data next run.\n\n```\n"
+                    + err + "\n```")
+
+
 def chain():
     if CHAIN.exists():
         CHAIN.unlink()
@@ -246,7 +261,8 @@ def main():
             mode = "check"
     log.info("run.py %s%s", mode, " (watch only)" if watch else "")
     {"session": lambda: session(watch), "report": report, "train": train, "check": check,
-     "recover": recover, "chain": chain, "research": research}.get(mode, check)()
+     "recover": recover, "chain": chain, "research": research,
+     "research_orb": research_orb}.get(mode, check)()
 
 
 if __name__ == "__main__":
