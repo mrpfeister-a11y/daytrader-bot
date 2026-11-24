@@ -1,0 +1,53 @@
+name: day-trading-bot
+
+on:
+  schedule:
+    # Every 15 min, Mon-Fri, 13:00-20:45 UTC. Covers US market hours in both
+    # summer and winter time. The bot asks Alpaca whether the market is open.
+    - cron: "*/15 13-20 * * 1-5"
+  workflow_dispatch:          # "Run workflow" button for manual tests
+    inputs:
+      watch_only:
+        description: "Watch only (no orders)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: bot                  # never two runs at once
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # Keep the trained model between runs so it only retrains weekly.
+      - uses: actions/cache@v4
+        with:
+          path: models
+          key: model-${{ github.run_id }}
+          restore-keys: model-
+
+      - name: Run one cycle
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_PAPER: "true"
+          I_UNDERSTAND_LIVE_TRADING_RISK: "no"
+        run: python trade.py --cloud ${{ inputs.watch_only && '--watch' || '' }}
+
+      - name: Save logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ github.run_id }}
+          path: logs/
+          retention-days: 30
+          if-no-files-found: ignore
