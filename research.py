@@ -161,6 +161,57 @@ def cross_section(P, k, at, reversal, uni):
     return portfolio(R, len(r))
 
 
+def noise_area(P, uni, vm, trail_vwap, exit_at, lookback=14, sizing=None, max_lev=4.0, target_vol=0.02):
+    """'Beat the Market' (Zarattini, Aziz & Barbon 2024): the day's 'noise area' is
+    open/prev-close +- the average move from the open seen at that time of day over the last
+    14 days. Every half hour: price above the area -> long, below -> short. Exit when price
+    falls back inside the area or crosses VWAP (trailing stop), else at the close.
+    sizing='vol' scales each market's position to a 2% daily-volatility target (up to max_lev x)."""
+    r = P.rows(uni)
+    C, O, H, L, V = P.C[r], P.open[r], P.H[r], P.L[r], P.V[r]
+    pc = P.prev_close[r]
+    S, D, T = C.shape
+    move = np.abs(C / O[..., None] - 1)                                  # [S, D, T]
+    sigma = np.full_like(move, np.nan)
+    for s in range(S):
+        sigma[s] = pd.DataFrame(move[s]).rolling(lookback, min_periods=lookback).mean().shift(1).to_numpy()
+    top, bot = np.fmax(O, pc)[..., None], np.fmin(O, pc)[..., None]
+    UB, LB = top * (1 + vm * sigma), bot * (1 - vm * sigma)
+    tp = (H + L + C) / 3
+    with np.errstate(invalid="ignore", divide="ignore"):
+        vwap = np.nancumsum(tp * np.nan_to_num(V), axis=2) / np.nancumsum(np.nan_to_num(V), axis=2)
+    checks = [t for t in range(T) if (585 + 15 * t) % 30 == 0 and 585 + 15 * t <= 930]   # 10:00 .. 15:30
+    last = T - 1 if exit_at == "16:00" else T - 2                          # close of 16:00 or 15:45 bar
+    end_px = P.close[r] if exit_at == "16:00" else C[:, :, T - 2]
+    pos = np.zeros((S, D))
+    ret = np.zeros((S, D))
+    px_prev = np.full((S, D), np.nan)
+    for t in checks:
+        price = C[:, :, t]
+        held = pos != 0
+        ret += np.where(held, pos * (price / px_prev - 1), 0)
+        if trail_vwap:
+            stop_l, stop_s = np.fmax(UB[:, :, t], vwap[:, :, t]), np.fmin(LB[:, :, t], vwap[:, :, t])
+        else:
+            stop_l, stop_s = UB[:, :, t], LB[:, :, t]
+        out = ((pos == 1) & ~(price > stop_l)) | ((pos == -1) & ~(price < stop_s))
+        ret -= np.where(out, COST, 0)
+        pos = np.where(out, 0, pos)
+        new = np.where(price > UB[:, :, t], 1, np.where(price < LB[:, :, t], -1, 0))
+        enter = (pos == 0) & (new != 0)
+        ret -= np.where(enter, COST, 0)
+        pos = np.where(enter, new, pos)
+        px_prev = np.where(pos != 0, price, np.nan)
+    ret += np.where(pos != 0, pos * (end_px / px_prev - 1) - COST, 0)
+    traded = (np.abs(ret) > 0) & ~np.isnan(sigma[:, :, checks[0]])
+    ret = np.where(traded, ret, np.nan)
+    if sizing == "vol":   # volatility targeting with the market's own recent daily volatility
+        dvol = pd.DataFrame((P.close[r] / pc - 1).T).rolling(14).std().shift(1).to_numpy().T
+        lev = np.clip(target_vol / dvol, 0, max_lev)
+        ret = ret * lev
+    return portfolio(ret, len(r))
+
+
 def overnight(P, uni):
     r = P.rows(uni)
     R = np.full(P.close[r].shape, np.nan)
@@ -191,6 +242,9 @@ IDEAS = {
     "4 Losers/winners of the day": (cross_section, dict(
         k=[3, 5], at=["09:45", "10:00", "11:00"], reversal=[True, False], uni=[ALL])),
     "5 Overnight hold (NOT day trading)": (overnight, dict(uni=[["SPY"], INDEXES, ALL])),
+    "6 Noise-area momentum (Beat the Market)": (noise_area, dict(
+        uni=[["SPY"], ["SPY", "QQQ"], INDEXES], vm=[1.0, 1.5], trail_vwap=[True, False],
+        exit_at=["15:45", "16:00"])),
 }
 
 
@@ -244,6 +298,15 @@ def main():
         })
         print(f"[research] {name}: dev Sharpe {results[-1]['dev']['sharpe']}, "
               f"exam Sharpe {results[-1]['exam']['sharpe']}", flush=True)
+    # the same best noise-area settings, sized like the paper (2% daily-vol target, up to 4x
+    # BORROWED money) - shown separately because it changes the bot's no-borrowing rule
+    nb = next(x for x in results if x["idea"].startswith("6 "))
+    kw6 = {k: {"SPY": ["SPY"], "SPY,QQQ": ["SPY", "QQQ"], "indexes": INDEXES}.get(v, v)
+           for k, v in nb["best_settings"].items()}
+    lev = noise_area(P, **kw6, sizing="vol")
+    results.append({"idea": "6b same, up to 4x BORROWED (paper's sizing)", "settings_tried": 0,
+                    "best_settings": nb["best_settings"], "dev": stats(lev[dev]), "exam": stats(lev[exam]),
+                    "years": per_year(lev, P.year)})
     bench = {"Buy & hold S&P 500 (SPY)": buy_hold_spy(P), "Open-to-close, all 20": open_to_close(P, ALL)}
     for name, d in bench.items():
         results.append({"idea": "BENCHMARK " + name, "settings_tried": 1, "best_settings": {},
