@@ -307,6 +307,16 @@ def main():
     results.append({"idea": "6b same, up to 4x BORROWED (paper's sizing)", "settings_tried": 0,
                     "best_settings": nb["best_settings"], "dev": stats(lev[dev]), "exam": stats(lev[exam]),
                     "years": per_year(lev, P.year)})
+    # cross-check: the paper's EXACT settings and its lower cost (~1 bp per side), to make sure
+    # a weak result isn't caused by our choices
+    global COST
+    saved, COST = COST, 0.0001
+    for label, kw in [("6c paper exact, no borrowing, 1bp", {}), ("6d paper exact, 4x BORROWED, 1bp", {"sizing": "vol"})]:
+        d6 = noise_area(P, ["SPY"], 1.0, True, "16:00", **kw)
+        results.append({"idea": label, "settings_tried": 0,
+                        "best_settings": {"uni": "SPY", "vm": 1.0, "trail_vwap": True, "exit_at": "16:00"},
+                        "dev": stats(d6[dev]), "exam": stats(d6[exam]), "years": per_year(d6, P.year)})
+    COST = saved
     bench = {"Buy & hold S&P 500 (SPY)": buy_hold_spy(P), "Open-to-close, all 20": open_to_close(P, ALL)}
     for name, d in bench.items():
         results.append({"idea": "BENCHMARK " + name, "settings_tried": 1, "best_settings": {},
