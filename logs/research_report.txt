@@ -11,6 +11,8 @@
  5 Overnight hold (NOT day trading)      5.99%    0.51    7.41%     0.7  0.0308%  -8.62%
  6 Noise-area momentum (Beat the Mark    1.17%    0.25    -0.7%   -0.11 -0.0022%  -5.62%
  6b same, up to 4x BORROWED (paper's     0.95%    0.14   -5.88%   -0.51 -0.0218% -13.47%
+ 6c paper exact, no borrowing, 1bp       1.85%     0.3   -3.83%   -0.61 -0.0148%   -9.6%
+ 6d paper exact, 4x BORROWED, 1bp         4.6%    0.37  -15.71%   -1.11 -0.0637% -24.13%
  BENCHMARK Buy & hold S&P 500 (SPY)     14.54%    0.84   10.25%    0.73  0.0431% -11.34%
  BENCHMARK Open-to-close, all 20        -3.14%   -0.12  -14.73%   -1.17 -0.0599% -20.42%
 ------------------------------------------------------------------------------
@@ -35,6 +37,12 @@
  6b same, up to 4x BORROWED (paper's sizing): uni=SPY,QQQ, vm=1.5, trail_vwap=False, exit_at=16:00
     by year: 2016:-4.7%  2017:-11.3%  2018:+25.2%  2019:-7.7%  2020:+11.5%  2021:-3.2%  2022:+9.1%  2023:+0.9%  2024:+5.1%  2025:-10.5%  2026:-5.4%
     exam: traded 48.8% of days, won 26.8% of those, avg -0.0446% per traded day
+ 6c paper exact, no borrowing, 1bp: uni=SPY, vm=1.0, trail_vwap=True, exit_at=16:00
+    by year: 2016:-7.7%  2017:-6.7%  2018:+19.0%  2019:-2.8%  2020:-4.7%  2021:+6.8%  2022:+12.5%  2023:+7.5%  2024:+0.0%  2025:-2.4%  2026:-3.7%
+    exam: traded 64.7% of days, won 38.7% of those, avg -0.0228% per traded day
+ 6d paper exact, 4x BORROWED, 1bp: uni=SPY, vm=1.0, trail_vwap=True, exit_at=16:00
+    by year: 2016:-24.1%  2017:-24.1%  2018:+44.9%  2019:-5.4%  2020:+13.6%  2021:+18.2%  2022:+16.7%  2023:+23.8%  2024:+12.5%  2025:-9.9%  2026:-15.4%
+    exam: traded 64.7% of days, won 38.7% of those, avg -0.0984% per traded day
  BENCHMARK Buy & hold S&P 500 (SPY): 
     by year: 2016:+13.0%  2017:+21.7%  2018:-4.9%  2019:+31.1%  2020:+18.3%  2021:+28.7%  2022:-18.2%  2023:+26.2%  2024:+24.9%  2025:+17.7%  2026:+6.2%
     exam: traded 100.0% of days, won 51.2% of those, avg 0.0431% per traded day
