@@ -5,3 +5,4 @@ __pycache__/
 .venv/
 tests/_logs/
 tests/_reports/
+data_cache/

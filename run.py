@@ -220,6 +220,14 @@ def recover():
                 print("report after failure also failed:", e)
 
 
+def research():
+    import research as lab
+    rep = lab.main()
+    notify.send("research lab results",
+                "Every idea was tuned on the older years only, then graded on the last year "
+                "(the final exam).\n\n```\n" + rep + "\n```")
+
+
 def chain():
     if CHAIN.exists():
         CHAIN.unlink()
@@ -238,7 +246,7 @@ def main():
             mode = "check"
     log.info("run.py %s%s", mode, " (watch only)" if watch else "")
     {"session": lambda: session(watch), "report": report, "train": train, "check": check,
-     "recover": recover, "chain": chain}.get(mode, check)()
+     "recover": recover, "chain": chain, "research": research}.get(mode, check)()
 
 
 if __name__ == "__main__":

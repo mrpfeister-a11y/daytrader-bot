@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "session / report / train / check"
+        description: "session / report / train / check / research"
         default: "check"
         type: string
       watch_only:
@@ -51,6 +51,13 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+
+      # keep downloaded price history between research runs (saves ~15 min each)
+      - uses: actions/cache@v4
+        with:
+          path: data_cache
+          key: bars-${{ github.run_id }}
+          restore-keys: bars-
 
       - name: Pick the job
         id: pick
