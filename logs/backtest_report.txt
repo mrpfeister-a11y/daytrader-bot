@@ -1,0 +1,41 @@
+==============================================================
+ HONESTY TEST (walk-forward: only data the model had NOT seen)
+==============================================================
+ History used         2016-01-04 .. 2026-11-24 (2740 trading days)
+ Best way found       market-neutral (best 3 long, worst 3 short), hold 60 min,
+                      trade when >= 62% sure
+ Trading cost used    2.0 bps per side
+--------------------------------------------------------------
+                              Validation         FINAL EXAM
+ Period                 2019-01..2025-11   2025-11..2026-11
+ Total return                      6.84%              0.19%
+ Per year                          0.97%              0.19%
+ Sharpe (yearly)                     1.4               1.18
+ Max drawdown                     -0.62%             -0.07%
+ Winning days                       9.4%               2.8%
+ Trades                             1007                 44
+ Right direction                   52.5%              55.9%
+ Costs paid                        1.01%              0.04%
+--------------------------------------------------------------
+ All 16 ways tried (best validation first):
+   style       hold  sure   valid. Sharpe/return   exam Sharpe/return
+   relative     60m  62%      1.4 /    6.84%      1.18 /    0.19%
+   relative    120m  62%     1.39 /    15.0%     -0.93 /   -0.59%
+   relative     60m  66%     1.27 /    3.34%      1.42 /    0.15%
+   relative     60m  58%     1.08 /   14.61%      0.61 /    0.58%
+   relative    120m  58%     0.75 /   13.74%     -1.68 /   -2.62%
+   direction    60m  66%     0.43 /    6.49%       1.7 /     0.5%
+   relative    120m  66%     0.41 /    2.27%     -0.47 /   -0.16%
+   direction   120m  66%     0.34 /    6.91%      0.64 /    0.81%
+   relative    120m  55%     0.33 /    8.14%     -1.92 /   -5.11%
+   direction    60m  62%     0.08 /    1.47%      1.25 /    1.07%
+   relative     60m  55%     0.06 /    0.91%     -2.25 /   -4.68%
+   direction   120m  62%    -0.05 /   -1.81%     -0.56 /   -1.26%
+   direction   120m  58%     -0.5 /  -16.19%     -0.19 /   -0.75%
+   direction    60m  58%    -0.52 /  -15.17%     -0.74 /   -1.68%
+   direction   120m  55%    -0.92 /  -30.71%     -1.07 /   -5.02%
+   direction    60m  55%    -1.12 /  -37.15%     -0.94 /   -3.58%
+--------------------------------------------------------------
+ EDGE FOUND -> bot is allowed to paper trade
+ (needs a final-exam Sharpe >= 1.0, a positive final-exam return, and a positive validation Sharpe)
+============================================================

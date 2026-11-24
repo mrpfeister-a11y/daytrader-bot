@@ -1,0 +1,201 @@
+{
+ "style": "relative",
+ "horizon": 4,
+ "entry_prob": 0.62,
+ "trained_at": "2026-11-24T22:08:27.268367+00:00",
+ "edge_passed": true,
+ "stats": {
+  "days_tested": 252,
+  "from": "2025-11-24",
+  "to": "2026-11-24",
+  "total_return_pct": 0.19,
+  "yearly_return_pct": 0.19,
+  "sharpe": 1.18,
+  "max_drawdown_pct": -0.07,
+  "winning_days_pct": 2.8,
+  "trades": 44,
+  "hit_rate_pct": 55.9,
+  "cost_paid_pct": 0.04
+ },
+ "validation": {
+  "days_tested": 1732,
+  "from": "2019-01-04",
+  "to": "2025-11-21",
+  "total_return_pct": 6.84,
+  "yearly_return_pct": 0.97,
+  "sharpe": 1.4,
+  "max_drawdown_pct": -0.62,
+  "winning_days_pct": 9.4,
+  "trades": 1007,
+  "hit_rate_pct": 52.5,
+  "cost_paid_pct": 1.01
+ },
+ "tried": [
+  {
+   "style": "direction",
+   "horizon": 4,
+   "entry_prob": 0.55,
+   "val_sharpe": -1.12,
+   "val_return_pct": -37.15,
+   "val_trades": 92693,
+   "exam_sharpe": -0.94,
+   "exam_return_pct": -3.58
+  },
+  {
+   "style": "direction",
+   "horizon": 4,
+   "entry_prob": 0.58,
+   "val_sharpe": -0.52,
+   "val_return_pct": -15.17,
+   "val_trades": 40850,
+   "exam_sharpe": -0.74,
+   "exam_return_pct": -1.68
+  },
+  {
+   "style": "direction",
+   "horizon": 4,
+   "entry_prob": 0.62,
+   "val_sharpe": 0.08,
+   "val_return_pct": 1.47,
+   "val_trades": 13618,
+   "exam_sharpe": 1.25,
+   "exam_return_pct": 1.07
+  },
+  {
+   "style": "direction",
+   "horizon": 4,
+   "entry_prob": 0.66,
+   "val_sharpe": 0.43,
+   "val_return_pct": 6.49,
+   "val_trades": 5017,
+   "exam_sharpe": 1.7,
+   "exam_return_pct": 0.5
+  },
+  {
+   "style": "direction",
+   "horizon": 8,
+   "entry_prob": 0.55,
+   "val_sharpe": -0.92,
+   "val_return_pct": -30.71,
+   "val_trades": 83495,
+   "exam_sharpe": -1.07,
+   "exam_return_pct": -5.02
+  },
+  {
+   "style": "direction",
+   "horizon": 8,
+   "entry_prob": 0.58,
+   "val_sharpe": -0.5,
+   "val_return_pct": -16.19,
+   "val_trades": 48103,
+   "exam_sharpe": -0.19,
+   "exam_return_pct": -0.75
+  },
+  {
+   "style": "direction",
+   "horizon": 8,
+   "entry_prob": 0.62,
+   "val_sharpe": -0.05,
+   "val_return_pct": -1.81,
+   "val_trades": 19865,
+   "exam_sharpe": -0.56,
+   "exam_return_pct": -1.26
+  },
+  {
+   "style": "direction",
+   "horizon": 8,
+   "entry_prob": 0.66,
+   "val_sharpe": 0.34,
+   "val_return_pct": 6.91,
+   "val_trades": 8256,
+   "exam_sharpe": 0.64,
+   "exam_return_pct": 0.81
+  },
+  {
+   "style": "relative",
+   "horizon": 4,
+   "entry_prob": 0.55,
+   "val_sharpe": 0.06,
+   "val_return_pct": 0.91,
+   "val_trades": 30142,
+   "exam_sharpe": -2.25,
+   "exam_return_pct": -4.68
+  },
+  {
+   "style": "relative",
+   "horizon": 4,
+   "entry_prob": 0.58,
+   "val_sharpe": 1.08,
+   "val_return_pct": 14.61,
+   "val_trades": 7003,
+   "exam_sharpe": 0.61,
+   "exam_return_pct": 0.58
+  },
+  {
+   "style": "relative",
+   "horizon": 4,
+   "entry_prob": 0.62,
+   "val_sharpe": 1.4,
+   "val_return_pct": 6.84,
+   "val_trades": 1007,
+   "exam_sharpe": 1.18,
+   "exam_return_pct": 0.19
+  },
+  {
+   "style": "relative",
+   "horizon": 4,
+   "entry_prob": 0.66,
+   "val_sharpe": 1.27,
+   "val_return_pct": 3.34,
+   "val_trades": 166,
+   "exam_sharpe": 1.42,
+   "exam_return_pct": 0.15
+  },
+  {
+   "style": "relative",
+   "horizon": 8,
+   "entry_prob": 0.55,
+   "val_sharpe": 0.33,
+   "val_return_pct": 8.14,
+   "val_trades": 33577,
+   "exam_sharpe": -1.92,
+   "exam_return_pct": -5.11
+  },
+  {
+   "style": "relative",
+   "horizon": 8,
+   "entry_prob": 0.58,
+   "val_sharpe": 0.75,
+   "val_return_pct": 13.74,
+   "val_trades": 11802,
+   "exam_sharpe": -1.68,
+   "exam_return_pct": -2.62
+  },
+  {
+   "style": "relative",
+   "horizon": 8,
+   "entry_prob": 0.62,
+   "val_sharpe": 1.39,
+   "val_return_pct": 15.0,
+   "val_trades": 2742,
+   "exam_sharpe": -0.93,
+   "exam_return_pct": -0.59
+  },
+  {
+   "style": "relative",
+   "horizon": 8,
+   "entry_prob": 0.66,
+   "val_sharpe": 0.41,
+   "val_return_pct": 2.27,
+   "val_trades": 582,
+   "exam_sharpe": -0.47,
+   "exam_return_pct": -0.16
+  }
+ ],
+ "cost_bps": 2.0,
+ "history": {
+  "from": "2016-01-04",
+  "to": "2026-11-24",
+  "days": 2740
+ }
+}
