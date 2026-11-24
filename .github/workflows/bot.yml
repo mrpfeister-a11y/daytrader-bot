@@ -1,25 +1,49 @@
 name: day-trading-bot
 
+# One job trades the whole day (checking every 15 min), then sends the report.
+# Several start times are listed on purpose: GitHub's timer can be late or skip a run,
+# and only one job ever runs at a time (the others wait, see nothing to do, and stop).
 on:
   schedule:
-    # Every 15 min, Mon-Fri, 13:00-20:45 UTC. Covers US market hours in both
-    # summer and winter time. The bot asks Alpaca whether the market is open.
-    - cron: "*/15 13-20 * * 1-5"
-  workflow_dispatch:          # "Run workflow" button for manual tests
+    - cron: "17 13 * * 1-5"     # morning start (summer: 9:17 AM New York)
+    - cron: "17 14 * * 1-5"     # morning start (winter: 9:17 AM New York)
+    - cron: "47 15-19 * * 1-5"  # backup starts during the day (restart if nothing is running)
+    - cron: "37 21 * * 1-5"     # backup: send the report if it didn't go out
+    - cron: "23 15 * * 6"       # Saturday: re-learn from all history + honesty test
+  push:
+    paths: ["requests/run.txt"] # backup starter (Claude watchdog) writes a command here
+  workflow_dispatch:
     inputs:
+      mode:
+        description: "session / report / train / check"
+        default: "check"
+        type: string
       watch_only:
-        description: "Watch only (no orders)"
+        description: "Watch only (no orders) - session mode"
         type: boolean
-        default: true
+        default: false
 
 concurrency:
-  group: bot                  # never two runs at once
+  group: daytrader              # never two runs at once
   cancel-in-progress: false
+
+permissions:
+  contents: write               # save logs, reports and the trained model
+  issues: write                 # email reports (closed issues that @mention you)
+  actions: write                # start a fresh run (hand-over, restart, retrain)
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 350
+    env:
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      ALPACA_PAPER: "true"                 # paper money only
+      I_UNDERSTAND_LIVE_TRADING_RISK: "no"
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NOTIFY_MENTION: mrpfeister-a11y
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,26 +52,41 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      # Keep the trained model between runs so it only retrains weekly.
-      - uses: actions/cache@v4
-        with:
-          path: models
-          key: model-${{ github.run_id }}
-          restore-keys: model-
+      - name: Pick the job
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then m="${{ inputs.mode }}";
+          elif [ "${{ github.event_name }}" = "push" ]; then m="push";
+          elif [ "${{ github.event.schedule }}" = "23 15 * * 6" ]; then m="train";
+          elif [ "${{ github.event.schedule }}" = "37 21 * * 1-5" ]; then m="report";
+          else m="session"; fi
+          echo "mode=$m" >> "$GITHUB_OUTPUT"
+          echo "Job: $m"
 
-      - name: Run one cycle
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          ALPACA_PAPER: "true"
-          I_UNDERSTAND_LIVE_TRADING_RISK: "no"
-        run: python trade.py --cloud ${{ inputs.watch_only && '--watch' || '' }}
+      - name: Run
+        timeout-minutes: 340
+        run: python run.py ${{ steps.pick.outputs.mode }} ${{ inputs.watch_only && '--watch' || '' }}
 
-      - name: Save logs
+      # (a run started by the next two steps waits until this job is completely
+      #  finished, so it always sees the saved logs)
+      - name: Something broke - email + restart
+        if: failure() || cancelled()
+        run: python run.py recover
+
+      - name: Hand the day over to a fresh job
+        if: success()
+        run: python run.py chain
+
+      - name: Save logs, reports and model
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: logs-${{ github.run_id }}
-          path: logs/
-          retention-days: 30
-          if-no-files-found: ignore
+        run: |
+          git config user.name "daytrader-bot"
+          git config user.email "daytrader-bot@users.noreply.github.com"
+          for d in logs reports models; do [ -d "$d" ] && git add -A "$d"; done
+          git diff --cached --quiet && exit 0
+          git commit -q -m "bot: ${{ steps.pick.outputs.mode }} $(date -u +%F_%H%M)"
+          for i in 1 2 3 4 5; do
+            git pull -q --rebase -X theirs origin main && git push -q && exit 0
+            sleep $((i * 5))
+          done
+          echo "could not save logs"; exit 1
