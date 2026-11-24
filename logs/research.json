@@ -256,6 +256,218 @@
   }
  },
  {
+  "idea": "7 Trend rule S&P (200-day style)",
+  "settings_tried": 6,
+  "best_settings": {
+   "ma": 200,
+   "lev": 1,
+   "off": "cash"
+  },
+  "dev": {
+   "avg_daily_pct": 0.0457,
+   "avg_traded_day_pct": 0.0458,
+   "yearly_pct": 11.47,
+   "total_pct": 192.14,
+   "sharpe": 1.0,
+   "max_dd_pct": -17.89,
+   "days_traded_pct": 99.9,
+   "win_pct": 66.0
+  },
+  "exam": {
+   "avg_daily_pct": 0.0244,
+   "avg_traded_day_pct": 0.0244,
+   "yearly_pct": 5.48,
+   "total_pct": 5.48,
+   "sharpe": 0.48,
+   "max_dd_pct": -8.13,
+   "days_traded_pct": 100.0,
+   "win_pct": 52.8
+  },
+  "years": {
+   "2016": 8.4,
+   "2017": 21.7,
+   "2018": -2.1,
+   "2019": 16.9,
+   "2020": 10.5,
+   "2021": 28.7,
+   "2022": -12.9,
+   "2023": 15.5,
+   "2024": 24.9,
+   "2025": 12.3,
+   "2026": 1.7
+  }
+ },
+ {
+  "idea": "8 2x S&P + trend rule",
+  "settings_tried": 6,
+  "best_settings": {
+   "ma": 200,
+   "lev": 2,
+   "off": "cash"
+  },
+  "dev": {
+   "avg_daily_pct": 0.0774,
+   "avg_traded_day_pct": 0.0774,
+   "yearly_pct": 18.34,
+   "total_pct": 427.36,
+   "sharpe": 0.85,
+   "max_dd_pct": -35.41,
+   "days_traded_pct": 100.0,
+   "win_pct": 65.6
+  },
+  "exam": {
+   "avg_daily_pct": 0.0339,
+   "avg_traded_day_pct": 0.0339,
+   "yearly_pct": 5.38,
+   "total_pct": 5.38,
+   "sharpe": 0.33,
+   "max_dd_pct": -16.43,
+   "days_traded_pct": 100.0,
+   "win_pct": 52.8
+  },
+  "years": {
+   "2016": 13.7,
+   "2017": 41.8,
+   "2018": -9.2,
+   "2019": 30.3,
+   "2020": 14.5,
+   "2021": 56.6,
+   "2022": -26.7,
+   "2023": 27.0,
+   "2024": 47.6,
+   "2025": 20.3,
+   "2026": -1.6
+  }
+ },
+ {
+  "idea": "9 3x S&P + trend rule",
+  "settings_tried": 6,
+  "best_settings": {
+   "ma": 200,
+   "lev": 3,
+   "off": "cash"
+  },
+  "dev": {
+   "avg_daily_pct": 0.1116,
+   "avg_traded_day_pct": 0.1116,
+   "yearly_pct": 24.73,
+   "total_pct": 785.87,
+   "sharpe": 0.82,
+   "max_dd_pct": -49.69,
+   "days_traded_pct": 100.0,
+   "win_pct": 65.6
+  },
+  "exam": {
+   "avg_daily_pct": 0.0467,
+   "avg_traded_day_pct": 0.0467,
+   "yearly_pct": 4.38,
+   "total_pct": 4.38,
+   "sharpe": 0.31,
+   "max_dd_pct": -24.4,
+   "days_traded_pct": 100.0,
+   "win_pct": 52.8
+  },
+  "years": {
+   "2016": 19.3,
+   "2017": 66.1,
+   "2018": -16.9,
+   "2019": 44.4,
+   "2020": 15.7,
+   "2021": 89.0,
+   "2022": -38.7,
+   "2023": 38.6,
+   "2024": 73.2,
+   "2025": 28.1,
+   "2026": -5.6
+  }
+ },
+ {
+  "idea": "10 Dual momentum (indexes)",
+  "settings_tried": 12,
+  "best_settings": {
+   "pool": "indexes",
+   "lookback": 63,
+   "top": 1,
+   "safe": "cash"
+  },
+  "dev": {
+   "avg_daily_pct": 0.0589,
+   "avg_traded_day_pct": 0.059,
+   "yearly_pct": 14.18,
+   "total_pct": 270.26,
+   "sharpe": 0.84,
+   "max_dd_pct": -28.44,
+   "days_traded_pct": 99.8,
+   "win_pct": 65.2
+  },
+  "exam": {
+   "avg_daily_pct": 0.0042,
+   "avg_traded_day_pct": 0.0042,
+   "yearly_pct": -0.51,
+   "total_pct": -0.51,
+   "sharpe": 0.06,
+   "max_dd_pct": -11.28,
+   "days_traded_pct": 99.6,
+   "win_pct": 57.0
+  },
+  "years": {
+   "2016": 10.7,
+   "2017": 30.4,
+   "2018": 1.2,
+   "2019": 12.0,
+   "2020": 26.1,
+   "2021": 32.1,
+   "2022": -4.2,
+   "2023": 24.0,
+   "2024": 10.6,
+   "2025": 7.3,
+   "2026": -4.2
+  }
+ },
+ {
+  "idea": "11 Sector rotation",
+  "settings_tried": 12,
+  "best_settings": {
+   "pool": "XLF,XLE,XLK,XLV",
+   "lookback": 252,
+   "top": 1,
+   "safe": "bonds"
+  },
+  "dev": {
+   "avg_daily_pct": 0.0773,
+   "avg_traded_day_pct": 0.078,
+   "yearly_pct": 18.17,
+   "total_pct": 419.82,
+   "sharpe": 0.83,
+   "max_dd_pct": -31.34,
+   "days_traded_pct": 99.2,
+   "win_pct": 60.8
+  },
+  "exam": {
+   "avg_daily_pct": 0.0107,
+   "avg_traded_day_pct": 0.0107,
+   "yearly_pct": -0.96,
+   "total_pct": -0.96,
+   "sharpe": 0.1,
+   "max_dd_pct": -25.12,
+   "days_traded_pct": 100.0,
+   "win_pct": 54.8
+  },
+  "years": {
+   "2016": 3.0,
+   "2017": 21.6,
+   "2018": -0.2,
+   "2019": 24.8,
+   "2020": 43.6,
+   "2021": 15.8,
+   "2022": 64.4,
+   "2023": 4.5,
+   "2024": 12.3,
+   "2025": 9.5,
+   "2026": -6.1
+  }
+ },
+ {
   "idea": "6b same, up to 4x BORROWED (paper's sizing)",
   "settings_tried": 0,
   "best_settings": {
@@ -458,6 +670,44 @@
    "2024": -8.5,
    "2025": -1.9,
    "2026": -15.0
+  }
+ },
+ {
+  "idea": "BENCHMARK Buy & hold Nasdaq (QQQ) - hindsight",
+  "settings_tried": 1,
+  "best_settings": {},
+  "dev": {
+   "avg_daily_pct": 0.0807,
+   "avg_traded_day_pct": 0.081,
+   "yearly_pct": 19.49,
+   "total_pct": 480.15,
+   "sharpe": 0.91,
+   "max_dd_pct": -35.0,
+   "days_traded_pct": 99.7,
+   "win_pct": 56.7
+  },
+  "exam": {
+   "avg_daily_pct": 0.0435,
+   "avg_traded_day_pct": 0.0435,
+   "yearly_pct": 8.63,
+   "total_pct": 8.63,
+   "sharpe": 0.47,
+   "max_dd_pct": -19.69,
+   "days_traded_pct": 100.0,
+   "win_pct": 53.2
+  },
+  "years": {
+   "2016": 9.3,
+   "2017": 32.6,
+   "2018": -0.1,
+   "2019": 38.9,
+   "2020": 48.6,
+   "2021": 27.4,
+   "2022": -32.4,
+   "2023": 54.8,
+   "2024": 25.6,
+   "2025": 20.8,
+   "2026": 4.2
   }
  }
 ]
