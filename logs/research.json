@@ -213,6 +213,92 @@
   }
  },
  {
+  "idea": "6 Noise-area momentum (Beat the Market)",
+  "settings_tried": 24,
+  "best_settings": {
+   "uni": "SPY,QQQ",
+   "vm": 1.5,
+   "trail_vwap": false,
+   "exit_at": "16:00"
+  },
+  "dev": {
+   "avg_daily_pct": 0.0052,
+   "avg_traded_day_pct": 0.0105,
+   "yearly_pct": 1.17,
+   "total_pct": 12.18,
+   "sharpe": 0.25,
+   "max_dd_pct": -8.87,
+   "days_traded_pct": 49.5,
+   "win_pct": 37.0
+  },
+  "exam": {
+   "avg_daily_pct": -0.0022,
+   "avg_traded_day_pct": -0.0046,
+   "yearly_pct": -0.7,
+   "total_pct": -0.7,
+   "sharpe": -0.11,
+   "max_dd_pct": -5.62,
+   "days_traded_pct": 48.8,
+   "win_pct": 26.8
+  },
+  "years": {
+   "2016": -0.1,
+   "2017": -3.6,
+   "2018": 11.7,
+   "2019": -2.2,
+   "2020": -2.3,
+   "2021": 0.8,
+   "2022": 8.7,
+   "2023": -0.4,
+   "2024": 0.2,
+   "2025": -0.8,
+   "2026": -0.2
+  }
+ },
+ {
+  "idea": "6b same, up to 4x BORROWED (paper's sizing)",
+  "settings_tried": 0,
+  "best_settings": {
+   "uni": "SPY,QQQ",
+   "vm": 1.5,
+   "trail_vwap": false,
+   "exit_at": "16:00"
+  },
+  "dev": {
+   "avg_daily_pct": 0.0061,
+   "avg_traded_day_pct": 0.0122,
+   "yearly_pct": 0.95,
+   "total_pct": 9.74,
+   "sharpe": 0.14,
+   "max_dd_pct": -18.79,
+   "days_traded_pct": 49.5,
+   "win_pct": 36.6
+  },
+  "exam": {
+   "avg_daily_pct": -0.0218,
+   "avg_traded_day_pct": -0.0446,
+   "yearly_pct": -5.88,
+   "total_pct": -5.88,
+   "sharpe": -0.51,
+   "max_dd_pct": -13.47,
+   "days_traded_pct": 48.8,
+   "win_pct": 26.8
+  },
+  "years": {
+   "2016": -4.7,
+   "2017": -11.3,
+   "2018": 25.2,
+   "2019": -7.7,
+   "2020": 11.5,
+   "2021": -3.2,
+   "2022": 9.1,
+   "2023": 0.9,
+   "2024": 5.1,
+   "2025": -10.5,
+   "2026": -5.4
+  }
+ },
+ {
   "idea": "BENCHMARK Buy & hold S&P 500 (SPY)",
   "settings_tried": 1,
   "best_settings": {},
