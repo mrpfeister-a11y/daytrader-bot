@@ -212,6 +212,95 @@ def noise_area(P, uni, vm, trail_vwap, exit_at, lookback=14, sizing=None, max_le
     return portfolio(ret, len(r))
 
 
+# ------------------------------------------- longer holds (days to months) ----
+RF = 0.03 / 252              # cash / borrowing rate per day (~3% a year)
+SECTORS = ["XLF", "XLE", "XLK", "XLV"]
+
+
+def _daily(P):
+    ret = P.close / P.prev_close - 1
+    return np.nan_to_num(ret)
+
+
+def _hold(P, weights):
+    """weights[s, d] decided at day d's close -> earns day d+1's return; costs on changes."""
+    R = _daily(P)
+    w = np.nan_to_num(weights)
+    held = np.zeros_like(w)
+    held[:, 1:] = w[:, :-1]
+    turn = np.abs(np.diff(np.concatenate([np.zeros((w.shape[0], 1)), held], axis=1), axis=1))
+    cash = 1 - held.sum(axis=0)
+    out = (held * R).sum(axis=0) - turn.sum(axis=0) * COST + np.where(cash > 0, cash * RF, 0)
+    return out
+
+
+def _sma(x, n):
+    return pd.DataFrame(x.T).rolling(n).mean().to_numpy().T
+
+
+def trend(P, ma, lev, off):
+    """Hold the S&P (x lev, daily reset like a 2x/3x fund) while it closes above its n-day
+    average; otherwise bonds (TLT) or cash."""
+    i, b = P.syms.index("SPY"), P.syms.index("TLT")
+    up = P.close[i] > _sma(P.close, ma)[i]
+    w = np.zeros(P.close.shape)
+    w[i] = np.where(up, 1.0, 0)
+    if off == "bonds":
+        w[b] = np.where(up, 0, 1.0)
+    out = _hold(P, w)
+    if lev > 1:   # leveraged version: lev x the S&P return, minus borrowing + fund fees on up days
+        held_up = np.zeros(len(out), bool)
+        held_up[1:] = up[:-1]
+        spy = _daily(P)[i]
+        out = np.where(held_up, lev * spy - (lev - 1) * RF - 0.009 / 252, out)
+    return out
+
+
+def _month_starts(P):
+    m = np.array([d.month for d in P.days])
+    return np.r_[True, m[1:] != m[:-1]]
+
+
+def rotation(P, pool, lookback, top, safe):
+    """Each month: hold the `top` strongest of `pool` by past return; any with a negative
+    return is swapped for the safe asset (bonds or cash). Antonacci-style dual momentum."""
+    r = P.rows(pool)
+    b = P.syms.index("TLT")
+    past = P.close / np.roll(P.close, lookback, axis=1) - 1
+    past[:, :lookback] = np.nan
+    w = np.full(P.close.shape, np.nan)
+    starts = _month_starts(P)
+    for d in np.where(starts)[0]:
+        if d == 0 or np.isnan(past[r, d - 1]).all():
+            continue
+        sc = past[r, d - 1]
+        order = np.argsort(-np.nan_to_num(sc, nan=-9))[:top]
+        w[:, d] = 0
+        for k in order:
+            if sc[k] > 0:
+                w[r[k], d] += 1 / top
+            elif safe == "bonds":
+                w[b, d] += 1 / top
+    w = pd.DataFrame(w.T).ffill().fillna(0).to_numpy().T
+    return _hold(P, w)
+
+
+LONG_IDEAS = {
+    "7 Trend rule S&P (200-day style)": (trend, dict(ma=[100, 150, 200], lev=[1], off=["cash", "bonds"])),
+    "8 2x S&P + trend rule": (trend, dict(ma=[100, 150, 200], lev=[2], off=["cash", "bonds"])),
+    "9 3x S&P + trend rule": (trend, dict(ma=[100, 150, 200], lev=[3], off=["cash", "bonds"])),
+    "10 Dual momentum (indexes)": (rotation, dict(pool=[INDEXES], lookback=[63, 126, 252], top=[1, 2],
+                                                  safe=["bonds", "cash"])),
+    "11 Sector rotation": (rotation, dict(pool=[SECTORS], lookback=[63, 126, 252], top=[1, 2],
+                                          safe=["bonds", "cash"])),
+}
+
+
+def buy_hold(P, sym):
+    i = P.syms.index(sym)
+    return _daily(P)[i]
+
+
 def overnight(P, uni):
     r = P.rows(uni)
     R = np.full(P.close[r].shape, np.nan)
@@ -280,7 +369,7 @@ def main():
     print(f"[research] {len(P.syms)} markets, {n} days: dev {P.days[0]}..{P.days[n - hold - 1]}, "
           f"exam {P.days[n - hold]}..{P.days[-1]}")
     results = []
-    for name, (fn, grid) in IDEAS.items():
+    for name, (fn, grid) in list(IDEAS.items()) + list(LONG_IDEAS.items()):
         keys = list(grid)
         tried = []
         for combo in itertools.product(*grid.values()):
@@ -317,7 +406,8 @@ def main():
                         "best_settings": {"uni": "SPY", "vm": 1.0, "trail_vwap": True, "exit_at": "16:00"},
                         "dev": stats(d6[dev]), "exam": stats(d6[exam]), "years": per_year(d6, P.year)})
     COST = saved
-    bench = {"Buy & hold S&P 500 (SPY)": buy_hold_spy(P), "Open-to-close, all 20": open_to_close(P, ALL)}
+    bench = {"Buy & hold S&P 500 (SPY)": buy_hold_spy(P), "Open-to-close, all 20": open_to_close(P, ALL),
+             "Buy & hold Nasdaq (QQQ) - hindsight": buy_hold(P, "QQQ")}
     for name, d in bench.items():
         results.append({"idea": "BENCHMARK " + name, "settings_tried": 1, "best_settings": {},
                         "dev": stats(d[dev]), "exam": stats(d[exam]), "years": per_year(d, P.year)})
