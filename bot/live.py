@@ -170,23 +170,27 @@ def rebalance(c, tgt: dict, latest, st: dict, watch_only: bool):
             else:
                 entries.pop(sym, None)
             continue
-        if have != 0:
-            c.close_position(sym)
-            record_trade(sym, "close", have, price.get(sym), "signal changed")
-            entries.pop(sym, None)
-            log.info("  closed %s (%d)", sym, have)
-        if want < 0:
-            asset = c.get_asset(sym)
-            if not (asset.shortable and asset.easy_to_borrow):
-                log.info("  %s not shortable right now, staying flat", sym)
-                continue
-        if want != 0:
-            side = OrderSide.BUY if want > 0 else OrderSide.SELL
-            o = c.submit_order(MarketOrderRequest(symbol=sym, qty=abs(want), side=side,
-                                                  time_in_force=TimeInForce.DAY))
-            record_trade(sym, side.value, abs(want), price.get(sym), "new signal", o.id)
-            entries[sym] = {"side": int(np.sign(want)), "bar": bar}
-            log.info("  %s %d %s", side.value.upper(), abs(want), sym)
+        try:   # one refused order must not stop the others (or the whole day)
+            if have != 0:
+                c.close_position(sym)
+                record_trade(sym, "close", have, price.get(sym), "signal changed")
+                entries.pop(sym, None)
+                log.info("  closed %s (%d)", sym, have)
+            if want < 0:
+                asset = c.get_asset(sym)
+                if not (asset.shortable and asset.easy_to_borrow):
+                    log.info("  %s not shortable right now, staying flat", sym)
+                    continue
+            if want != 0:
+                side = OrderSide.BUY if want > 0 else OrderSide.SELL
+                o = c.submit_order(MarketOrderRequest(symbol=sym, qty=abs(want), side=side,
+                                                      time_in_force=TimeInForce.DAY))
+                record_trade(sym, side.value, abs(want), price.get(sym), "new signal", o.id)
+                entries[sym] = {"side": int(np.sign(want)), "bar": bar}
+                log.info("  %s %d %s", side.value.upper(), abs(want), sym)
+        except Exception as e:
+            log.warning("  order for %s refused, skipping it this time: %s", sym, str(e)[:150])
+            st.setdefault("refused", {}).setdefault(today_ny(), []).append(sym)
 
 
 def cycle(c, bundle, st: dict, watch_only: bool) -> str:
@@ -209,6 +213,14 @@ def cycle(c, bundle, st: dict, watch_only: bool) -> str:
     log.info("Bar %s, %d markets, signals: %s", latest["ts"].max(), len(latest),
              {s: int(v) for s, v in zip(latest["symbol"], latest["signal"]) if v} or "none")
     record_decisions(latest, "watch" if watch_only else "trade")
+    try:   # this week's challenger model guesses too (practice only, never trades)
+        ch = model.load_challenger()
+        if ch:
+            lc = latest.copy()
+            decide(lc, ch)
+            record_decisions(lc, "challenger")
+    except Exception as e:
+        log.warning("challenger guess failed (ignored): %s", e)
     rebalance(c, targets(latest, equity, st, bundle["horizon"]), latest, st, watch_only)
     st["last_cycle"] = datetime.now(timezone.utc).isoformat()
     st.setdefault("cycles", {})

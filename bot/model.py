@@ -178,7 +178,7 @@ def edge_passed(choice: dict) -> bool:
             and va["sharpe"] > 0)
 
 
-def train_and_save(df: pd.DataFrame, choice: dict, cost_bps: float):
+def train_and_save(df: pd.DataFrame, choice: dict, cost_bps: float, path=None):
     days = np.array(sorted(df["day"].unique()))
     recent = df[df["day"] >= days[max(0, len(days) - config.TRAIN_WINDOW_DAYS)]]
     m = fit(recent, choice["style"], choice["horizon"])
@@ -198,16 +198,22 @@ def train_and_save(df: pd.DataFrame, choice: dict, cost_bps: float):
         "universe": sorted(df["symbol"].unique()),
         "features": FEATURES,
     }
-    config.MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(bundle, config.MODEL_PATH, compress=3)
+    path = path or config.MODEL_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(bundle, path, compress=3)
     return bundle
 
 
-def load():
-    if not config.MODEL_PATH.exists():
+def load_challenger():
+    return load(config.CHALLENGER_PATH)
+
+
+def load(path=None):
+    path = path or config.MODEL_PATH
+    if not path.exists():
         return None
     try:
-        b = joblib.load(config.MODEL_PATH)
+        b = joblib.load(path)
     except Exception:
         return None
     if b.get("features") != FEATURES or "horizon" not in b:   # an old model from before the upgrade

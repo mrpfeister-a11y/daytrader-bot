@@ -79,7 +79,11 @@ def run(days: int = None) -> dict:
         raise SystemExit("Not enough history to test. Need at least ~25 trading days.")
     cost = cost_to_use()
     choice = model.choose(preds, cost)
-    bundle = model.train_and_save(df, choice, cost)
+    # If a model is already trading, the new one becomes the CHALLENGER: it only makes
+    # practice guesses until it proves on live prices that it's better (see review.contest).
+    path = config.CHALLENGER_PATH if model.load() is not None else config.MODEL_PATH
+    bundle = model.train_and_save(df, choice, cost, path)
+    bundle["is_challenger"] = path == config.CHALLENGER_PATH
 
     report = "\n".join(report_lines(bundle))
     print(report)

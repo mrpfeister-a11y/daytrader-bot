@@ -51,9 +51,12 @@ def _decisions(day: str) -> pd.DataFrame:
     return d[d["bar_ts"].dt.date.astype(str) == day]
 
 
-def shadow_check(day: str, horizon: int) -> dict:
-    """Were today's guesses right? (works in watch mode too)"""
+def shadow_check(day: str, horizon: int, who: str = "champion") -> dict:
+    """Were today's guesses right? (works in watch mode too). who = champion or challenger."""
     dec = _decisions(day)
+    if dec.empty:
+        return {"n": 0}
+    dec = dec[(dec["mode"] == "challenger") if who == "challenger" else (dec["mode"] != "challenger")]
     dec = dec[dec["signal"] != 0]
     if dec.empty:
         return {"n": 0}
@@ -126,6 +129,50 @@ def learn(day: str, mode: str, day_pct: float, shadow: dict, slips: list) -> dic
     return L
 
 
+def contest(day: str, bundle, champ_today: dict) -> str:
+    """Champion vs. challenger on live guesses. The better one is kept, so the bot can only
+    get better. Returns a line for the report ('' if there is no challenger)."""
+    from . import model
+    ch = model.load_challenger()
+    if not ch:
+        return ""
+    L = load_learned()
+    c = L.get("contest")
+    if not c or c.get("challenger_trained") != ch["trained_at"]:
+        c = {"challenger_trained": ch["trained_at"], "days": 0,
+             "champ": [0, 0, 0.0], "chall": [0, 0, 0.0]}           # guesses, right, total bps
+    try:
+        b = shadow_check(day, ch["horizon"], "challenger")
+    except Exception:
+        b = {"n": 0}
+    for key, s in (("champ", champ_today), ("chall", b)):
+        if s.get("n"):
+            c[key][0] += s["n"]
+            c[key][1] += s["hits"]
+            c[key][2] += s["avg_bps"] * s["n"]
+    c["days"] += 1
+    avg = lambda k: c[k][2] / c[k][0] if c[k][0] else float("-inf")
+    line = (f"🏆 Champion vs. challenger, day {c['days']}: current model {avg('champ'):+.1f} bps per guess "
+            f"({c['champ'][0]} guesses) vs. new model {avg('chall'):+.1f} bps ({c['chall'][0]} guesses)")
+    line = line.replace("-inf", "n/a")
+    better = avg("chall") > avg("champ") and c["chall"][0] >= config.CONTEST_MIN_GUESSES
+    allowed = ch["edge_passed"] or not (bundle and bundle["edge_passed"])
+    if c["days"] >= config.CONTEST_MIN_DAYS and better and allowed:
+        config.CHALLENGER_PATH.replace(config.MODEL_PATH)
+        line += " -> **the new model won and now trades**"
+        L.pop("contest", None)
+        L["promoted"] = L.get("promoted", 0) + 1
+    elif c["days"] >= config.CONTEST_MAX_DAYS:
+        config.CHALLENGER_PATH.unlink(missing_ok=True)
+        line += " -> the current model was as good or better, so it stays"
+        L.pop("contest", None)
+        L["kept"] = L.get("kept", 0) + 1
+    else:
+        L["contest"] = c
+    LEARNED.write_text(json.dumps(L, indent=1))
+    return line
+
+
 def daily_report(c, bundle, st: dict, day: str) -> tuple:
     """Returns (title, markdown, urgent)."""
     acct = c.get_account()
@@ -156,6 +203,9 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
         problems.append(f"restarted itself {restarts}x after a problem")
     if not st.get("guard_ok", True):
         problems.append("SAFETY: " + st.get("guard_reason", "account check failed"))
+    refused = st.get("refused", {}).get(day, [])
+    if refused:
+        problems.append(f"Alpaca refused {len(refused)} order(s) ({', '.join(sorted(set(refused))[:6])}); skipped them")
 
     out = []
     out.append(("✅ Ran all day" if not problems else "⚠️ " + "; ".join(problems))
@@ -197,12 +247,19 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
                    + (f" (backtest said {bt}%)" if bt is not None else "")
                    + (f"; real trading cost {L['slippage_bps_per_side']} bps per trade"
                       if L.get("slippage_bps_per_side") is not None else ""))
+    try:
+        duel = contest(day, bundle, shadow)
+    except Exception as e:
+        duel = f"🏆 champion vs. challenger check failed (ignored): {str(e)[:80]}"
+    if duel:
+        out.append(duel)
     if L.get("just_paused"):
         out.append("⏸️ **It paused itself today**: after 20+ trading days, its real results were "
                    "losing and its guesses were wrong more than right. It will only watch until a new "
                    "weekly test passes.")
-        L.pop("just_paused")
-        LEARNED.write_text(json.dumps(L, indent=1))
+        L2 = load_learned()          # re-read: the contest above may have just saved changes
+        L2.pop("just_paused", None)
+        LEARNED.write_text(json.dumps(L2, indent=1))
     if bundle:
         ex = bundle["stats"]
         traded = f", traded on {ex['days_traded']} of them" if "days_traded" in ex else ""

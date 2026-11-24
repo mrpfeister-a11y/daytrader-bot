@@ -64,9 +64,15 @@ def after_close(c, st, bundle):
     notify.send(title, md, urgent=urgent)
     st["report_sent"] = day
     live.save_state(st)
-    if model_age_days(bundle) >= config.RETRAIN_DAYS and st.get("train_started") != day:
+    # Only ONE follow-up run per day (GitHub keeps just one waiting run; a second would replace it).
+    # (no new model while a challenger is still competing - the contest must finish first)
+    if model.load_challenger() is None and model_age_days(bundle) >= config.RETRAIN_DAYS \
+            and st.get("train_started") != day:
         st["train_started"] = day
         notify.start_run("train")
+    elif st.get("research_month") != day[:7]:     # once a month: re-run the research lab
+        st["research_month"] = day[:7]
+        notify.start_run("research")
 
 
 def session(watch_flag=False):
@@ -144,16 +150,31 @@ def session(watch_flag=False):
 
 def train():
     import train as t
+    if model.load_challenger() is not None:
+        print("A challenger model is still competing with the current one - no new model until "
+              "that contest is decided.")
+        return
     b = t.run()
     L = review.load_learned()
     if b["edge_passed"] and L.get("paused"):          # a fresh pass lifts a self-pause
         L.update(paused=False, review_from=live.today_ny())
         review.LEARNED.write_text(review.json.dumps(L, indent=1))
     rep = (config.LOG_DIR / "backtest_report.txt").read_text(encoding="utf-8")
-    notify.send("weekly honesty test: " + ("PASSED - it may paper trade" if b["edge_passed"]
-                                           else "no edge - keeps watching only"),
-                "It re-learned from all history and tested itself on data it had never seen.\n\n"
-                "```\n" + rep + "```")
+    L = review.load_learned()
+    learned = (f"\n\n📚 Learned from live trading so far: right {L.get('live_hit_rate_pct')}% of "
+               f"{L.get('live_guesses', 0)} guesses; real cost {L.get('slippage_bps_per_side')} bps per trade; "
+               f"new models promoted {L.get('promoted', 0)}x, current model kept {L.get('kept', 0)}x."
+               if L.get("live_guesses") else "")
+    if b.get("is_challenger"):
+        head = ("new challenger model trained (" + ("passed" if b["edge_passed"] else "did not pass")
+                + " its test)")
+        what = ("It re-learned from all history, including this week. It will NOT trade yet: for the next "
+                f"{config.CONTEST_MIN_DAYS}-{config.CONTEST_MAX_DAYS} trading days it makes practice guesses "
+                "next to the current model, and the one that does better on real prices is kept.")
+    else:
+        head = "honesty test: " + ("PASSED - it may paper trade" if b["edge_passed"] else "no edge - keeps watching only")
+        what = "It re-learned from all history and tested itself on data it had never seen."
+    notify.send(head, what + learned + "\n\n```\n" + rep + "```")
 
 
 def report():

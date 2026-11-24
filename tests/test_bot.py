@@ -147,7 +147,7 @@ ok((pos == 0).all(), "backtest uses the same 3:30 PM rule")
 
 print("4. a full fake trading day")
 b2 = dict(bundle, edge_passed=True)            # pretend the test passed so it trades
-model.load = lambda: b2
+model.load = lambda path=None: b2 if path in (None, config.MODEL_PATH) else None
 c = FakeClient()
 ny = live.NY
 d0 = datetime.fromisoformat(review_day).replace(tzinfo=ny)
@@ -192,7 +192,7 @@ live.today_ny = lambda: "2099-01-02"
 c = FakeClient()
 c.clocks = [clock(True, d0.replace(hour=10, minute=1), open_t + timedelta(days=1), close_t),
             clock(False, d0.replace(hour=16, minute=2), open_t + timedelta(days=1), close_t + timedelta(days=1))]
-model.load = lambda: dict(bundle, edge_passed=False)
+model.load = lambda path=None: dict(bundle, edge_passed=False) if path in (None, config.MODEL_PATH) else None
 run.session()
 ok(c.orders == [] and c.closed == [], "no orders when the honesty test did not pass")
 live.today_ny = lambda: str(last_day)
@@ -203,7 +203,7 @@ c = FakeClient(account="PA-OTHER-BOTS", positions={"COST": 5, "SPY": 2})
 c.clocks = [clock(True, d0.replace(hour=10, minute=1), open_t + timedelta(days=1), close_t),
             clock(True, d0.replace(hour=15, minute=50), open_t + timedelta(days=1), close_t),
             clock(False, d0.replace(hour=16, minute=2), open_t + timedelta(days=1), close_t + timedelta(days=1))]
-model.load = lambda: b2
+model.load = lambda path=None: b2 if path in (None, config.MODEL_PATH) else None
 run.session()
 ok(c.orders == [] and c.closed == [] and c.pos == {"COST": 5, "SPY": 2},
    "other bots' account untouched (not even at the close)")
@@ -240,7 +240,37 @@ STARTED.clear()
 run.chain()
 ok(STARTED == ["session"] and not run.CHAIN.exists(), "long day handed to a fresh job")
 
-print("8. backtest pieces")
+print("8. champion vs. challenger")
+import shutil  # noqa: E402
+real_load = model.__dict__.get("_real_load") or model.load
+config.MODEL_PATH = config.LOG_DIR / "champ.joblib"
+config.CHALLENGER_PATH = config.LOG_DIR / "chall.joblib"
+import joblib  # noqa: E402
+joblib.dump(dict(bundle, edge_passed=True, trained_at="2026-01-01T00:00:00+00:00"), config.MODEL_PATH)
+joblib.dump(dict(bundle, edge_passed=True, trained_at="2026-02-01T00:00:00+00:00"), config.CHALLENGER_PATH)
+model.load = lambda path=None: joblib.load(path or config.MODEL_PATH) if (path or config.MODEL_PATH).exists() else None
+model.load_challenger = lambda: model.load(config.CHALLENGER_PATH)
+champ = {"n": 30, "hits": 14, "avg_bps": -1.0}
+review.shadow_check = lambda day, h, who="champion": {"n": 30, "hits": 18, "avg_bps": 3.0}
+for i in range(config.CONTEST_MIN_DAYS - 1):
+    line = review.contest(f"2026-03-0{i + 1}", model.load(), champ)
+    ok(config.CHALLENGER_PATH.exists() and "day" in line, f"contest day {i + 1}: still competing")
+line = review.contest("2026-03-09", model.load(), champ)
+ok("won" in line and not config.CHALLENGER_PATH.exists(), "better challenger is promoted after 5 days")
+ok(model.load()["trained_at"].startswith("2026-02"), "the promoted model now trades")
+joblib.dump(dict(bundle, edge_passed=True, trained_at="2026-04-01T00:00:00+00:00"), config.CHALLENGER_PATH)
+review.shadow_check = lambda day, h, who="champion": {"n": 30, "hits": 10, "avg_bps": -5.0}
+for i in range(config.CONTEST_MAX_DAYS):
+    line = review.contest(f"2026-04-{i + 10}", model.load(), champ)
+ok("stays" in line and not config.CHALLENGER_PATH.exists()
+   and model.load()["trained_at"].startswith("2026-02"), "worse challenger is dropped, champion kept")
+STARTED.clear()
+run.train()
+ok(True, "weekly training runs when no contest is going on")  # (trains on Yahoo data offline)
+ok(config.CHALLENGER_PATH.exists(), "new weekly model becomes a challenger, not the champion")
+ok(model.load()["trained_at"].startswith("2026-02"), "champion untouched until the challenger proves itself")
+
+print("9. backtest pieces")
 fr = pd.DataFrame({"ts": pd.date_range("2026-01-05 10:00", periods=8, freq="15min", tz="America/New_York"),
                    "symbol": "SPY", "day": "2026-01-05", "time_of_day": 0.3})
 held = model.hold_for_horizon(fr, np.array([1, 0, 0, 0, 0, -1, 0, 0]), 4)

@@ -70,9 +70,13 @@ CLOUD_FLATTEN_MINUTES = 45          # old one-shot cloud mode only
 
 # --- Learning from its own live results ------------------------------------
 LIVE_REVIEW_MIN_DAYS = 20           # after this many trading days, compare live vs. backtest
-SESSION_MAX_MINUTES = 330           # one cloud job; then it hands over to a fresh one
+SESSION_MAX_MINUTES = 300           # one cloud job (limit 340 min); then it hands over to a fresh one
 MAX_RESTARTS_PER_DAY = 3
 
-MODEL_PATH = ROOT / "models" / "model.joblib"
+MODEL_PATH = ROOT / "models" / "model.joblib"            # the champion (trades)
+CHALLENGER_PATH = ROOT / "models" / "challenger.joblib"  # this week's new model (practice guesses only)
+CONTEST_MIN_DAYS = 5     # champion vs. challenger: compare live guesses for at least 5 trading days
+CONTEST_MAX_DAYS = 10    # then decide; by 10 days the challenger is promoted or dropped
+CONTEST_MIN_GUESSES = 20
 LOG_DIR = ROOT / "logs"
 REPORT_DIR = ROOT / "reports"
