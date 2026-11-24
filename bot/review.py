@@ -205,8 +205,9 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
         LEARNED.write_text(json.dumps(L, indent=1))
     if bundle:
         ex = bundle["stats"]
+        traded = f", traded on {ex['days_traded']} of them" if "days_traded" in ex else ""
         out.append(f"🧪 Last honesty test ({bundle['trained_at'][:10]}): final exam "
-                   f"{ex['total_return_pct']:+.2f}% over {ex['days_tested']} days, Sharpe {ex['sharpe']} -> "
+                   f"{ex['total_return_pct']:+.2f}% over {ex['days_tested']} days{traded}, Sharpe {ex['sharpe']} -> "
                    + ("PASSED" if bundle["edge_passed"] else "not good enough to trade"))
     out.append("Paper money - not financial advice.")
 

@@ -44,7 +44,9 @@ def report_lines(bundle: dict) -> list:
         f" {'Per year':20} {va['yearly_return_pct']:>{w - 1}}% {ex['yearly_return_pct']:>{w - 1}}%",
         f" {'Sharpe (yearly)':20} {va['sharpe']:>{w}} {ex['sharpe']:>{w}}",
         f" {'Max drawdown':20} {va['max_drawdown_pct']:>{w - 1}}% {ex['max_drawdown_pct']:>{w - 1}}%",
-        f" {'Winning days':20} {va['winning_days_pct']:>{w - 1}}% {ex['winning_days_pct']:>{w - 1}}%",
+        f" {'Days it traded':20} {str(va['days_traded']) + '/' + str(va['days_tested']):>{w}} "
+        f"{str(ex['days_traded']) + '/' + str(ex['days_tested']):>{w}}",
+        f" {'Won (days traded)':20} {va['winning_days_pct']:>{w - 1}}% {ex['winning_days_pct']:>{w - 1}}%",
         f" {'Trades':20} {va['trades']:>{w}} {ex['trades']:>{w}}",
         f" {'Right direction':20} {va['hit_rate_pct']:>{w - 1}}% {ex['hit_rate_pct']:>{w - 1}}%",
         f" {'Costs paid':20} {va['cost_paid_pct']:>{w - 1}}% {ex['cost_paid_pct']:>{w - 1}}%",
