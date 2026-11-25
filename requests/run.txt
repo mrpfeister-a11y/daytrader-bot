@@ -1,3 +1,1 @@
-notify
-🧪 Test: the day-trader's Claude watchdog can email you. From tomorrow it checks the bot after every close, fixes bugs itself (tests must pass first) and tells you what it did.
-Paper money - not financial advice.
+session - backup starter
