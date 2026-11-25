@@ -145,7 +145,9 @@ def pick(cand: pd.DataFrame, ob: pd.DataFrame) -> pd.DataFrame:
 
 
 def day_bars(client, picks: pd.DataFrame) -> pd.DataFrame:
-    path = CACHE / "orb_daybars.pkl"
+    """1-MINUTE bars for each picked stock-day (the paper's resolution: with 5-min bars a
+    tight stop and the entry often fall in the same bar and the order is unknowable)."""
+    path = CACHE / "orb_daybars1m.pkl"
     have = pd.read_pickle(path) if path.exists() else pd.DataFrame()
     done = set(have["day"].unique()) if len(have) else set()
     frames = [have] if len(have) else []
@@ -154,10 +156,13 @@ def day_bars(client, picks: pd.DataFrame) -> pd.DataFrame:
         if day in done:
             continue
         o = pd.Timestamp(f"{pd.Timestamp(day).date()} 09:30", tz=NY).tz_convert("UTC").to_pydatetime()
-        df = _bars(client, sorted(grp["symbol"]), o, o + timedelta(hours=6, minutes=30), minutes=5)
+        df = _bars(client, sorted(grp["symbol"]), o, o + timedelta(hours=6, minutes=30), minutes=1)
         if not df.empty:
             df["day"] = day
-            frames.append(df[["symbol", "day", "timestamp", "open", "high", "low", "close"]])
+            df = df[["symbol", "day", "timestamp", "open", "high", "low", "close"]]
+            for col in ("open", "high", "low", "close"):
+                df[col] = df[col].astype("float32")
+            frames.append(df)
         if k % 200 == 0:
             print(f"[orb] day bars {k}/{len(days)}", flush=True)
             pd.concat(frames, ignore_index=True).to_pickle(path)
@@ -174,9 +179,12 @@ def simulate(picks, bars, max_lev, slip_bps, start_equity=100_000.0):
         trades = []
         for r in grp.itertuples():
             b = by.get((day, r.symbol))
-            if b is None or len(b) < 3:
+            if b is None or len(b) < 10:
                 continue
-            after = b.iloc[1:]                                  # bars after the first 5 minutes
+            t0 = pd.Timestamp(f"{pd.Timestamp(day).date()} 09:35", tz=NY).tz_convert("UTC")
+            after = b[b["timestamp"] >= t0]                     # minutes after the first 5 minutes
+            if after.empty:
+                continue
             entry = r.h if r.side == 1 else r.l
             hit = (after["high"] > entry) if r.side == 1 else (after["low"] < entry)
             if not hit.any():
@@ -186,9 +194,16 @@ def simulate(picks, bars, max_lev, slip_bps, start_equity=100_000.0):
             entry = max(entry, bar_open) if r.side == 1 else min(entry, bar_open)
             risk = 0.1 * r.atr
             stop = entry - risk if r.side == 1 else entry + risk
-            rest = after.iloc[j:]
+            # entry minute: stopped only if it CLOSED beyond the stop (the order inside one
+            # minute is unknowable); later minutes: any touch of the stop counts
+            first_close = float(after["close"].iloc[j])
+            same = (first_close <= stop) if r.side == 1 else (first_close >= stop)
+            rest = after.iloc[j + 1:]
             stopped = (rest["low"] <= stop) if r.side == 1 else (rest["high"] >= stop)
-            exit_px = stop if stopped.any() else float(rest["close"].iloc[-1])
+            if same or stopped.any():
+                exit_px = stop
+            else:
+                exit_px = float(rest["close"].iloc[-1]) if len(rest) else first_close
             trades.append((entry, exit_px, r.side, risk))
         if not trades:
             rows.append((day, 0.0, 0))
