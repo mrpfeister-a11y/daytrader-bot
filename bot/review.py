@@ -17,8 +17,19 @@ import pandas as pd
 
 from . import config, data, live
 
+import logging
+
 LEARNED = config.LOG_DIR / "learned.json"
 DAYS = config.LOG_DIR / "live_days.csv"
+log = logging.getLogger("bot")
+
+
+def write_summary(day: str, d: dict) -> None:
+    """reports/summary.json: today's numbers for both bots, read by the 7-bot report page
+    (raw.githubusercontent.com/mrpfeister-a11y/daytrader-bot/main/reports/summary.json)."""
+    config.REPORT_DIR.mkdir(exist_ok=True)
+    d = {"day": day, "made": datetime.now(timezone.utc).isoformat(timespec="seconds"), **d}
+    (config.REPORT_DIR / "summary.json").write_text(json.dumps(d, indent=1), encoding="utf-8")
 
 
 def load_learned() -> dict:
@@ -357,6 +368,30 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
     title = "report " + datetime.fromisoformat(day).strftime("%a %b %d")
     md = "\n\n".join(out)
     config.REPORT_DIR.mkdir(exist_ok=True)
+    try:   # small summary the 7-bot report page reads (public repo, paper numbers only)
+        trades8 = []
+        for sym, b in sorted((by if orders else {}).items(), key=lambda kv: -kv[1]["cash"]):
+            trades8.append({"symbol": sym, "orders": b["n"], "traded": round(b["gross"], 2), "pnl": round(b["cash"], 2)})
+        res9 = [r for r in t9.get("results", []) if r.get("triggered")] if t9 else []
+        pnl9 = sum(r["pnl"] for r in res9)
+        b9 = (t9 or {}).get("budget") or last * config.BUDGET_SHARE["sip"]
+        tot9 = sum(hist["sip"].values())
+        write_summary(day, {
+            "account": {"equity": round(equity, 2), "day_usd": round(day_usd, 2), "day_pct": round(acct_day_pct, 3),
+                        "total_usd": round(tot_usd, 2), "total_pct": round(tot_pct, 3)},
+            "bot8": {"budget": round(b8, 2), "mode": mode, "day_usd": round(pnl8, 2), "day_pct": round(day_pct, 3),
+                     "total_usd": round(tot8, 2), "total_pct": round(tot8 / b8 * 100, 3) if b8 else 0.0,
+                     "checks": cycles, "problems": problems[:], "trades": trades8},
+            "bot9": {"budget": round(b9, 2), "mode": (t9 or {}).get("mode", "missing"),
+                     "day_usd": round(pnl9, 2), "day_pct": round(pnl9 / b9 * 100, 3) if b9 else 0.0,
+                     "total_usd": round(tot9, 2), "total_pct": round(tot9 / b9 * 100, 3) if b9 else 0.0,
+                     "picked": len((t9 or {}).get("results", [])), "triggered": len(res9),
+                     "won": sum(1 for r in res9 if r["pnl"] > 0),
+                     "results": [{"symbol": r["symbol"], "side": "buy" if r["side"] == 1 else "short",
+                                  "pnl": round(r["pnl"], 2)} for r in sorted(res9, key=lambda r: -r["pnl"])]},
+        })
+    except Exception as e:
+        log.warning("summary.json not written: %s", e)
     (config.REPORT_DIR / f"{day}.md").write_text(f"# Day-trader {title}\n\n{md}\n", encoding="utf-8")
     (config.REPORT_DIR / "latest.md").write_text(f"# Day-trader {title}\n\n{md}\n", encoding="utf-8")
     return title, md, bool(problems)

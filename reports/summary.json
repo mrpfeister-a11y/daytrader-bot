@@ -1,0 +1,139 @@
+{
+ "day": "2026-11-25",
+ "made": "2026-11-25T22:59:14+00:00",
+ "account": {
+  "equity": 54873.8,
+  "day_usd": 24.71,
+  "day_pct": 0.045,
+  "total_usd": 24.71,
+  "total_pct": 0.045
+ },
+ "bot8": {
+  "budget": 27424.54,
+  "mode": "trade",
+  "day_usd": 24.71,
+  "day_pct": 0.09,
+  "total_usd": 24.71,
+  "total_pct": 0.09,
+  "checks": 25,
+  "problems": [],
+  "trades": [
+   {
+    "symbol": "AMD",
+    "orders": 2,
+    "traded": 2417,
+    "pnl": 14.85
+   },
+   {
+    "symbol": "XLK",
+    "orders": 2,
+    "traded": 2480,
+    "pnl": 6.33
+   },
+   {
+    "symbol": "NVDA",
+    "orders": 2,
+    "traded": 2661,
+    "pnl": 3.53
+   }
+  ]
+ },
+ "bot9": {
+  "budget": 27424.54,
+  "mode": "practice",
+  "day_usd": -116.31,
+  "day_pct": -0.424,
+  "total_usd": 0.0,
+  "total_pct": 0.0,
+  "picked": 20,
+  "triggered": 17,
+  "won": 1,
+  "results": [
+   {
+    "symbol": "WCN",
+    "side": "buy",
+    "pnl": 15.74
+   },
+   {
+    "symbol": "VTR",
+    "side": "short",
+    "pnl": -3.93
+   },
+   {
+    "symbol": "IFF",
+    "side": "buy",
+    "pnl": -5.2
+   },
+   {
+    "symbol": "CBRE",
+    "side": "short",
+    "pnl": -5.26
+   },
+   {
+    "symbol": "SFNC",
+    "side": "short",
+    "pnl": -5.43
+   },
+   {
+    "symbol": "PHM",
+    "side": "short",
+    "pnl": -5.51
+   },
+   {
+    "symbol": "BNTX",
+    "side": "short",
+    "pnl": -5.51
+   },
+   {
+    "symbol": "COLD",
+    "side": "buy",
+    "pnl": -5.95
+   },
+   {
+    "symbol": "WDAY",
+    "side": "buy",
+    "pnl": -6.54
+   },
+   {
+    "symbol": "XOVR",
+    "side": "short",
+    "pnl": -6.85
+   },
+   {
+    "symbol": "MT",
+    "side": "short",
+    "pnl": -7.05
+   },
+   {
+    "symbol": "AEO",
+    "side": "short",
+    "pnl": -7.58
+   },
+   {
+    "symbol": "DAR",
+    "side": "buy",
+    "pnl": -7.94
+   },
+   {
+    "symbol": "NTNX",
+    "side": "short",
+    "pnl": -11.82
+   },
+   {
+    "symbol": "FDMT",
+    "side": "buy",
+    "pnl": -12.3
+   },
+   {
+    "symbol": "VSH",
+    "side": "short",
+    "pnl": -16.51
+   },
+   {
+    "symbol": "QDEL",
+    "side": "buy",
+    "pnl": -18.67
+   }
+  ]
+ }
+}

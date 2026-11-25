@@ -182,6 +182,9 @@ rep = [s for s in SENT if s[0].startswith("report")]
 ok(len(rep) == 1 and "Today's trades" in rep[0][1] and "TRADING" in rep[0][1], "daily report emailed")
 ok("Paper money" in rep[0][1], "report says paper money")
 ok((config.REPORT_DIR / "latest.md").exists(), "report saved to reports/latest.md")
+_sm = json.loads((config.REPORT_DIR / "summary.json").read_text(encoding="utf-8"))
+ok({"day", "account", "bot8", "bot9"} <= set(_sm) and "day_pct" in _sm["bot8"] and _sm["bot8"]["trades"],
+   "summary.json saved for the 7-bot report page (with today's trades)")
 L = json.loads(review.LEARNED.read_text())
 ok(L.get("live_guesses", 0) >= 0 and "slippage_bps_per_side" in L, "learned.json updated")
 n_reports = len(rep)
