@@ -173,14 +173,89 @@ def contest(day: str, bundle, champ_today: dict) -> str:
     return line
 
 
+def sip_mine(sym):
+    return sym not in config.UNIVERSE
+
+
+def sip_today(day: str) -> dict:
+    """Bot #9's results file. Bot #9 runs as a separate job, so read the newest copy
+    from GitHub (without touching this job's own files); fall back to the local copy."""
+    import subprocess
+    rel = "logs/sip_today.json"
+    try:
+        subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=config.ROOT, timeout=60,
+                       capture_output=True, check=True)
+        txt = subprocess.run(["git", "show", f"origin/main:{rel}"], cwd=config.ROOT, timeout=30,
+                             capture_output=True, text=True, check=True).stdout
+        d = json.loads(txt)
+    except Exception:
+        try:
+            d = json.loads((config.LOG_DIR / "sip_today.json").read_text())
+        except (OSError, ValueError):
+            d = {}
+    return d if d.get("day") == day else {}
+
+
+def bot9_section(day: str, t9: dict, hist: dict) -> tuple:
+    """(markdown, problems) for bot #9 in the shared daily report."""
+    b9 = t9.get("budget") or 0
+    head = f"## 🚀 Bot #9 - stocks in play (budget ${b9:,.0f})" if b9 else "## 🚀 Bot #9 - stocks in play"
+    if not t9:
+        return head + "\n\n⚠️ Its results for today aren't in yet (the watchdog will check).", \
+            ["bot #9 results missing"]
+    res = [r for r in t9.get("results", []) if r.get("triggered")]
+    pnl = sum(r["pnl"] for r in res)
+    practice = t9["mode"] == "practice"
+    lines = [head, ""]
+    if practice:
+        lines.append(f"🧪 **PRACTICE** (no orders yet): it would have made {'+' if pnl >= 0 else '-'}${abs(pnl):,.2f} "
+                     f"({pnl / b9 * 100:+.2f}% of its budget)" if b9 else "🧪 **PRACTICE**")
+    else:
+        tot9 = sum(hist["sip"].values())
+        lines.append(f"Today {_fmt(pnl / b9 * 100 if b9 else 0, pnl)} · since start "
+                     f"{'+' if tot9 >= 0 else '-'}${abs(tot9):,.2f}")
+    picks = t9.get("results", [])
+    lines.append(f"Picked {len(picks)} stocks in play, {len(res)} broke out and were "
+                 + ("traded" if not practice else "practice-traded")
+                 + f", {sum(1 for r in res if r['pnl'] > 0)} won")
+    if res:
+        rows = ["| Stock | Way | Result |", "|---|---|---|"]
+        for r in sorted(res, key=lambda r: -r["pnl"])[:12]:
+            dot = "🟢" if r["pnl"] > 0 else "🔴" if r["pnl"] < 0 else "⚪"
+            rows.append(f"| {r['symbol']} | {'buy' if r['side'] == 1 else 'short'} | "
+                        f"{dot} {'+' if r['pnl'] >= 0 else '-'}${abs(r['pnl']):,.2f} |")
+        lines.append("\n".join(rows))
+    L = t9.get("learned", {})
+    bits = []
+    if L.get("slippage_bps") is not None:
+        bits.append(f"real cost {L['slippage_bps']} bps per trade")
+    if L.get("real_days"):
+        bits.append(f"{L['real_days']} real days, {L.get('real_total_pct', 0):+.2f}% in total")
+    p = t9.get("params", {})
+    bits.append(f"settings: top {p.get('top_n')}, stop {p.get('stop_atr', 0) * 100:.0f}% of ATR, "
+                f"borrowing up to {t9.get('leverage', 1)}x")
+    lines.append("📚 " + "; ".join(bits))
+    if L.get("paused"):
+        lines.append("⏸️ It paused itself (real results were losing after 20+ days): practice only "
+                     "until its monthly re-test passes.")
+    bad = [f"bot #9: Alpaca refused {len(t9['refused'])} order(s)"] if t9.get("refused") else []
+    return "\n\n".join(x for x in lines if x is not None), bad
+
+
 def daily_report(c, bundle, st: dict, day: str) -> tuple:
     """Returns (title, markdown, urgent)."""
     acct = c.get_account()
     equity, last = float(acct.equity), float(acct.last_equity)
     start = float(st.get("start_equity") or equity)
-    day_usd, tot_usd = equity - last, equity - start
-    day_pct = day_usd / last * 100 if last else 0.0
+    day_usd, tot_usd = equity - last, equity - start              # whole account (both bots)
+    acct_day_pct = day_usd / last * 100 if last else 0.0
     tot_pct = tot_usd / start * 100 if start else 0.0
+    # bot #8's own part (it trades only its 20 markets, so its fills are exactly its trades)
+    b8 = last * config.BUDGET_SHARE["dt"]
+    pnl8 = live.own_day_pnl(c, day, live.is_dt)
+    day_pct = pnl8 / b8 * 100 if b8 else 0.0
+    hist = st.setdefault("pnl", {"dt": {}, "sip": {}})
+    hist["dt"][day] = round(pnl8, 2)
     L0 = load_learned()
     trading = bool(bundle and bundle.get("edge_passed")) and not L0.get("paused") and st.get("guard_ok", True)
     mode = "trade" if trading else "watch"
@@ -207,7 +282,16 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
     if refused:
         problems.append(f"Alpaca refused {len(refused)} order(s) ({', '.join(sorted(set(refused))[:6])}); skipped them")
 
+    t9 = sip_today(day)
+    if t9.get("mode") == "trade":
+        pnl9 = live.own_day_pnl(c, day, sip_mine)
+        hist["sip"][day] = round(pnl9, 2)
     out = []
+    out.append(f"💰 **Whole account** (both bots): today {_fmt(acct_day_pct, day_usd)} · "
+               f"since start {_fmt(tot_pct, tot_usd)}")
+    tot8 = sum(hist["dt"].values())
+    out.append(f"## 🤖 Bot #8 - winners vs. losers (budget ${b8:,.0f})\n\n"
+               f"Today {_fmt(day_pct, pnl8)} · since start {'+' if tot8 >= 0 else '-'}${abs(tot8):,.2f}")
     out.append(("✅ Ran all day" if not problems else "⚠️ " + "; ".join(problems))
                + f" ({cycles} checks)")
     out.append("🧪 Mode: " + ("**TRADING (paper)** - its honesty test passed" if trading else
@@ -216,9 +300,6 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
                                  else "safety check failed" if not st.get("guard_ok", True)
                                  else "no model yet" if not bundle
                                  else "no proven edge yet, so no orders")))
-    out.append(f"💰 Today {_fmt(day_pct, day_usd)}")
-    out.append(f"📈 Total since start {_fmt(tot_pct, tot_usd)}")
-
     # today's trades: the bot is flat at the end of the day, so money in vs. money out = result
     if orders:
         by = {}
@@ -266,6 +347,9 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
         out.append(f"🧪 Last honesty test ({bundle['trained_at'][:10]}): final exam "
                    f"{ex['total_return_pct']:+.2f}% over {ex['days_tested']} days{traded}, Sharpe {ex['sharpe']} -> "
                    + ("PASSED" if bundle["edge_passed"] else "not good enough to trade"))
+    sec9, bad9 = bot9_section(day, t9, hist)
+    out.append(sec9)
+    problems += bad9
     out.append("Paper money - not financial advice.")
 
     title = "report " + datetime.fromisoformat(day).strftime("%a %b %d")

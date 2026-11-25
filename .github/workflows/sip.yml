@@ -1,0 +1,79 @@
+name: bot-9-stocks-in-play
+
+# Bot #9 runs next to bot #8 (separate job, same paper account, never the same stocks).
+on:
+  schedule:
+    - cron: "12 13 * * 1-5"     # morning start (summer)
+    - cron: "12 14 * * 1-5"     # morning start (winter)
+    - cron: "52 15-19 * * 1-5"  # backup starts during the day (restart if nothing is running)
+  push:
+    paths: ["requests/sip.txt"] # backup starter (Claude watchdog) writes a command here
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "session / check"
+        default: "check"
+        type: string
+
+concurrency:
+  group: bot9                   # never two bot #9 runs at once
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      ALPACA_PAPER: "true"                 # paper money only
+      I_UNDERSTAND_LIVE_TRADING_RISK: "no"
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NOTIFY_MENTION: mrpfeister-a11y
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Pick the job
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then m="${{ inputs.mode }}";
+          elif [ "${{ github.event_name }}" = "push" ]; then m="push";
+          else m="session"; fi
+          echo "mode=$m" >> "$GITHUB_OUTPUT"
+
+      - name: Run
+        timeout-minutes: 340
+        run: python run_sip.py ${{ steps.pick.outputs.mode }}
+
+      - name: Something broke - email + restart
+        if: failure() || cancelled()
+        run: python run_sip.py recover "${{ job.status }}"
+
+      - name: Hand the day over to a fresh job
+        if: success()
+        run: python run_sip.py chain
+
+      - name: Save logs
+        if: always()
+        run: |
+          git config user.name "daytrader-bot"
+          git config user.email "daytrader-bot@users.noreply.github.com"
+          [ -d logs ] && git add -A logs
+          git diff --cached --quiet && exit 0
+          git commit -q -m "bot9: ${{ steps.pick.outputs.mode }} $(date -u +%F_%H%M)"
+          for i in 1 2 3 4 5; do
+            git pull -q --rebase -X theirs origin main && git push -q && exit 0
+            sleep $((i * 5))
+          done
+          echo "could not save logs"; exit 1

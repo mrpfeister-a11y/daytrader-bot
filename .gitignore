@@ -1,6 +1,8 @@
 .env
 logs/bot.log
 logs/chain.flag
+logs/sip.log
+logs/sip_chain.flag
 __pycache__/
 .venv/
 tests/_logs/

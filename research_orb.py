@@ -66,7 +66,7 @@ def universe():
 
 def daily(client, syms):
     path = CACHE / "orb_daily.pkl"
-    if path.exists():
+    if path.exists() and time.time() - path.stat().st_mtime < 20 * 86400:   # refresh monthly
         return pd.read_pickle(path)
     end = datetime.now(timezone.utc) - timedelta(minutes=20)
     frames = []
@@ -171,7 +171,8 @@ def day_bars(client, picks: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def simulate(picks, bars, max_lev, slip_bps, start_equity=100_000.0):
+def simulate(picks, bars, max_lev, slip_bps, start_equity=100_000.0, stop_atr=0.1, top_n=TOP_N):
+    picks = picks.sort_values(["day", "rvol"], ascending=[True, False]).groupby("day").head(top_n)
     bars = bars.sort_values(["day", "symbol", "timestamp"])
     by = {k: g for k, g in bars.groupby(["day", "symbol"])}
     eq, rows = start_equity, []
@@ -192,7 +193,7 @@ def simulate(picks, bars, max_lev, slip_bps, start_equity=100_000.0):
             j = int(np.argmax(hit.to_numpy()))
             bar_open = float(after["open"].iloc[j])     # jumped past the level -> filled at the open
             entry = max(entry, bar_open) if r.side == 1 else min(entry, bar_open)
-            risk = 0.1 * r.atr
+            risk = stop_atr * r.atr
             stop = entry - risk if r.side == 1 else entry + risk
             # entry minute: stopped only if it CLOSED beyond the stop (the order inside one
             # minute is unknowable); later minutes: any touch of the stop counts
@@ -231,6 +232,43 @@ def stats(r: pd.Series) -> dict:
             "max_dd_pct": round(float((eq / eq.cummax() - 1).min() * 100), 1),
             "avg_day_pct": round(float(r.mean() * 100), 3),
             "beat_spy_days_pct": None}
+
+
+def retune(picks, bars, days, cut) -> list:
+    """Bot #9 learning: re-test its settings with its REAL trading costs. Keep a new setting
+    only if it wins on the dev years AND makes money on the final-exam year it never chose on."""
+    import json
+    learned_path = config.LOG_DIR / "sip_learned.json"
+    try:
+        L = json.loads(learned_path.read_text())
+    except (OSError, ValueError):
+        L = {}
+    slip = max(5.0, float(L.get("slippage_bps") or 0))
+    lev = config.SIP_MAX_LEVERAGE
+    tried = []
+    for top_n in (10, 20):
+        for stop in (0.05, 0.10, 0.20):
+            r = simulate(picks, bars, lev, slip, stop_atr=stop, top_n=top_n)["ret"].reindex(days).fillna(0)
+            dv, ex = stats(r[r.index < cut]), stats(r[r.index >= cut])
+            tried.append({"top_n": top_n, "stop_atr": stop, "dev": dv, "exam": ex})
+    best = max(tried, key=lambda t: t["dev"]["sharpe"])
+    passed = best["dev"]["sharpe"] > 0 and best["exam"]["yearly_pct"] > 0
+    out = ["-" * 78, f" BOT #9 MONTHLY RE-TEST (real cost {slip:.1f} bps/side, borrowing {lev}x):"]
+    for t in sorted(tried, key=lambda t: -t["dev"]["sharpe"]):
+        out.append(f"   top {t['top_n']:>2}, stop {t['stop_atr'] * 100:>3.0f}% ATR: dev {t['dev']['yearly_pct']:>7}%/yr "
+                   f"(Sharpe {t['dev']['sharpe']}), exam {t['exam']['yearly_pct']:>7}%")
+    if passed:
+        config.SIP_PARAMS.write_text(json.dumps({"top_n": best["top_n"], "stop_atr": best["stop_atr"],
+                                                 "chosen_on": str(datetime.now(timezone.utc).date()),
+                                                 "dev": best["dev"], "exam": best["exam"]}, indent=1))
+        out.append(f" -> bot #9 now uses top {best['top_n']}, stop {best['stop_atr'] * 100:.0f}% of ATR")
+        if L.get("paused"):
+            L.update(paused=False, review_from=str(datetime.now(timezone.utc).date()))
+            learned_path.write_text(json.dumps(L, indent=1))
+            out.append(" -> the re-test passed, so bot #9's self-pause is lifted")
+    else:
+        out.append(" -> no setting passed the final exam: bot #9 keeps its current settings")
+    return out
 
 
 def main():
@@ -278,6 +316,7 @@ def main():
         lines.append(f" {label}: " + "  ".join(f"{y}:{v * 100:+.0f}%" for y, v in yrs.items()))
     sy = spy.groupby([d_.year for d_ in spy.index]).apply(lambda x: (1 + x).prod() - 1)
     lines.append(" S&P 500: " + "  ".join(f"{y}:{v * 100:+.0f}%" for y, v in sy.items()))
+    lines += retune(picks, bars, days, cut)
     lines.append(f" (took {(time.time() - t0) / 60:.0f} min)")
     lines.append("=" * 78)
     rep = "\n".join(lines)

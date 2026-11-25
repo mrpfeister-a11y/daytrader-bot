@@ -1,4 +1,4 @@
-﻿"""Offline tests with a fake Alpaca account (no keys, no orders). Run:  python tests/test_bot.py
+"""Offline tests with a fake Alpaca account (no keys, no orders). Run:  python tests/test_bot.py
 Needs a trained model in models/ (python train.py works without keys, on Yahoo data)."""
 import json
 import sys
@@ -30,7 +30,7 @@ for d in (config.LOG_DIR, config.REPORT_DIR):
 
 SENT, STARTED = [], []
 notify.send = lambda title, msg, urgent=False: SENT.append((title, msg, urgent)) or True
-notify.start_run = lambda mode: STARTED.append(mode) or True
+notify.start_run = lambda mode, workflow="bot.yml": STARTED.append(mode) or True
 run.time.sleep = lambda s: None
 
 passed = 0
@@ -61,7 +61,7 @@ class FakeClient:
         return Obj(account_number=self.account, equity=str(self.equity), last_equity="100000")
 
     def get_all_positions(self):
-        return [Obj(symbol=s, qty=str(q)) for s, q in self.pos.items()]
+        return [Obj(symbol=s, qty=str(q), market_value=str(q * 100.0)) for s, q in self.pos.items()]
 
     def close_position(self, sym):
         self.closed.append(sym)
@@ -107,6 +107,7 @@ latest_mid = day_rows[day_rows["ts"] == mid_ts].copy()
 live.latest_features = lambda universe: latest_mid.copy()
 data.from_alpaca = lambda symbols, days: bars
 live.today_ny = lambda: str(last_day)
+review.sip_today = lambda day: {}
 review_day = str(last_day)
 
 print("1. account safety guard")
@@ -117,7 +118,7 @@ config.BLOCKED_ACCOUNT_HASHES.add(fp)
 okk, why = live.guard(FakeClient(account="PA-OTHER-BOTS"))
 ok(not okk and "other 7 bots" in why, "the other bots' account -> refused")
 okk, why = live.guard(FakeClient(positions={"COST": 5}))
-ok(not okk and "COST" in why, "account holding other stocks -> refused")
+ok(okk, "account shared with bot #9 (other stocks) -> allowed")
 
 print("2. only closes its own markets")
 c = FakeClient(positions={"SPY": 10, "AAPL": -3})
@@ -281,7 +282,152 @@ ok(True, "weekly training runs when no contest is going on")  # (trains on Yahoo
 ok(config.CHALLENGER_PATH.exists(), "new weekly model becomes a challenger, not the champion")
 ok(model.load()["trained_at"].startswith("2026-02"), "champion untouched until the challenger proves itself")
 
-print("9. backtest pieces")
+print("9. bot #9 (stocks in play) in the shared account")
+from bot import sip  # noqa: E402
+for name in ("STATE", "TRADES", "LEARNED", "TODAY", "ERR", "CHAIN"):
+    setattr(sip, name, config.LOG_DIR / getattr(sip, name).name)
+config.SIP_PARAMS = config.LOG_DIR / "sip_params.json"
+sip.time.sleep = lambda s: None
+DAY9 = "2026-12-01"
+live.today_ny = lambda: DAY9
+
+
+class FakeOrder(Obj):
+    pass
+
+
+class SipClient:
+    """Fake account shared by both bots: SPY belongs to bot #8, the rest to bot #9."""
+    def __init__(self):
+        self.pos = {"SPY": 10}                       # bot #8's position - must never be touched
+        self.orders = {}
+        self.cancelled, self.closed = [], []
+
+    def get_all_assets(self, req):
+        mk = lambda s, ex="NASDAQ", short=True: Obj(symbol=s, tradable=True, exchange=Obj(value=ex),
+                                                    shortable=short, easy_to_borrow=short)
+        return [mk("NVDA"), mk("ZZZA"), mk("ZZZB", short=False), mk("ZZZC", "OTC"), mk("BRK.B"), mk("SPY", "ARCA")]
+
+    def get_account(self):
+        return Obj(account_number="PA-TEST-9", equity="100000", last_equity="100000")
+
+    def get_all_positions(self):
+        return [Obj(symbol=s, qty=str(q), market_value=str(q * 50.0)) for s, q in self.pos.items()]
+
+    def submit_order(self, req):
+        o = FakeOrder(id=f"s{len(self.orders)}", symbol=req.symbol, side=req.side, qty=req.qty,
+                      stop_price=req.stop_price, status=Obj(value="accepted"), filled_qty="0",
+                      filled_avg_price=None, filled_at=None)
+        self.orders[o.id] = o
+        return o
+
+    def fill(self, sym, price):
+        for o in self.orders.values():
+            if o.symbol == sym and o.status.value == "accepted":
+                o.status, o.filled_qty, o.filled_avg_price = Obj(value="filled"), str(o.qty), str(price)
+                o.filled_at = datetime.now(timezone.utc)
+                q = o.qty if o.side.value == "buy" else -o.qty
+                self.pos[sym] = self.pos.get(sym, 0) + q
+                return
+
+    def get_orders(self, req):
+        st = req.status.value
+        if st == "open":
+            return [o for o in self.orders.values() if o.status.value == "accepted"]
+        if st == "closed":
+            return [o for o in self.orders.values() if o.status.value == "filled"]
+        return list(self.orders.values())
+
+    def cancel_order_by_id(self, i):
+        self.cancelled.append(self.orders[str(i)].symbol)
+        self.orders[str(i)].status = Obj(value="canceled")
+
+    def close_position(self, sym):
+        self.closed.append(sym)
+        self.pos.pop(sym, None)
+
+
+sc = SipClient()
+stocks = sip.stock_list(sc)
+ok(set(stocks) == {"ZZZA", "ZZZB"}, "stock list: no bot #8 markets (NVDA, SPY), no OTC, no odd symbols")
+ok(stocks["ZZZA"] and not stocks["ZZZB"], "knows which stocks it may short")
+
+# candidates + picks from fake prices
+days14 = [f"2026-11-{d:02d}" for d in range(10, 24)]
+cands = pd.DataFrame({"atr": [2.0, 1.5], "avgvol": [3e6, 2e6], "n": [14, 14], "prev_close": [50.0, 30.0],
+                      "easy_short": [True, False], "days": [days14, days14]}, index=["ZZZA", "ZZZB"])
+avg = pd.Series({"ZZZA": 10000.0, "ZZZB": 10000.0})
+sip._open_bar = lambda symbols, day: pd.DataFrame(
+    {"open": [50.0, 30.0], "high": [51.0, 30.5], "low": [49.5, 29.0], "close": [50.8, 29.2],
+     "volume": [30000.0, 25000.0]}, index=["ZZZA", "ZZZB"])
+picks = sip.pick(cands, avg, DAY9, 20)
+ok(list(picks.index) == ["ZZZA"], "ZZZB (falling, not shortable) skipped; ZZZA (rising, 3x volume) picked")
+sizes = sip.plan_sizes(picks, 50000, 0.10)
+ok(int(sizes.iloc[0]) == 245, "size: 1%-risk size (2,500 sh) capped at 25% of its $50k budget = 245 shares")
+config.SIP_MAX_LEVERAGE = 1.0
+big = sip.plan_sizes(picks.assign(atr=0.05), 50000, 0.10)
+ok(float(big.iloc[0]) * 51.0 <= 50000 * 0.25 + 51, "never more than 25% of its budget in one stock (no borrowing)")
+
+st9 = {"day": DAY9, "orders": {}, "picked": True, "done": False}
+sip.place_entries(sc, picks, sizes, st9)
+o = list(sc.orders.values())[0]
+ok(o.symbol == "ZZZA" and o.side.value == "buy" and o.stop_price == 51.0, "buy-stop placed at the 5-minute high")
+sc.fill("ZZZA", 51.02)
+sip.manage(sc, st9, 0.10)
+stops = [x for x in sc.orders.values() if x.side.value == "sell"]
+ok(len(stops) == 1 and abs(stops[0].stop_price - 50.82) < 0.01, "after the fill: stop-loss at fill - 10% ATR")
+sip.manage(sc, st9, 0.10)
+ok(len([x for x in sc.orders.values() if x.side.value == "sell"]) == 1, "no duplicate stop-loss")
+sip.flatten(sc)
+ok(sc.closed == ["ZZZA"] and "SPY" not in sc.cancelled and sc.pos == {"SPY": 10},
+   "end of day: closes only its own stock - bot #8's SPY untouched")
+ok("ZZZA" in sc.cancelled, "end of day: its open stop-loss is cancelled")
+pnl8 = live.own_day_pnl(sc, DAY9, live.is_dt)
+ok(abs(pnl8 - 500.0) < 1e-6, "bot #8's daily result counts only its own stocks")
+
+# practice day: one winner, one stopped out
+mins = pd.date_range(f"{DAY9} 09:35", periods=5, freq="1min", tz="America/New_York").tz_convert("UTC")
+sip._bars = lambda symbols, start, end, minutes=None, feed="iex", adjustment="split": pd.DataFrame({
+    "symbol": ["ZZZA"] * 5 + ["ZZZQ"] * 5, "timestamp": list(mins) * 2,
+    "open": [50.9, 51.1, 51.5, 52.0, 52.5, 30.0, 29.9, 29.6, 30.4, 30.9],
+    "high": [51.0, 51.6, 52.1, 52.6, 53.0, 30.1, 29.95, 29.7, 30.5, 31.0],
+    "low": [50.8, 51.0, 51.4, 51.9, 52.4, 29.8, 29.5, 29.5, 30.3, 30.8],
+    "close": [50.95, 51.5, 52.0, 52.5, 53.0, 29.9, 29.6, 30.4, 30.9, 30.9]})
+pk = pd.DataFrame({"side": [1, -1], "high": [51.0, 30.2], "low": [49.5, 29.6], "atr": [2.0, 1.5]},
+                  index=["ZZZA", "ZZZQ"])
+res = sip.simulate(pk, [100, 100], DAY9, 0.10)
+win = next(r for r in res if r["symbol"] == "ZZZA")
+loss = next(r for r in res if r["symbol"] == "ZZZQ")
+ok(win["triggered"] and not win["stopped"] and win["pnl"] > 150, "practice: breakout that keeps going = a win")
+ok(loss["triggered"] and loss["stopped"] and loss["pnl"] < 0, "practice: short that turns back = stopped out")
+L9 = sip.learn(DAY9, "practice", res, 50000)
+ok(L9["days"][DAY9]["trades"] == 2 and sip.TRADES.exists(), "practice trades logged for learning")
+for k in range(config.LIVE_REVIEW_MIN_DAYS):
+    L9 = sip.learn(f"2026-12-{k + 2:02d}", "trade", [{"symbol": "ZZZA", "side": 1, "triggered": True,
+                                                      "pnl": -100.0, "slippage_bps": 8.0}], 50000)
+ok(L9["paused"] and L9["slippage_bps"] == 8.0, "losing 20 real days -> pauses itself; real cost measured (8 bps)")
+ok(sip.practicing("2026-12-30"), "while paused it only practices")
+
+# a full practice session: no orders at all
+sip.save_json(sip.LEARNED, {})
+config.SIP_TRADE_FROM = "2099-01-01"
+sc2 = SipClient()
+live.client = lambda: sc2
+sip.candidates = lambda c, day: cands
+sip.opening_volume_avg = lambda c: avg
+ny9 = datetime.fromisoformat(DAY9).replace(tzinfo=live.NY)
+clocks9 = [clock(True, ny9.replace(hour=9, minute=36), ny9 + timedelta(days=1), ny9.replace(hour=16)),
+           clock(True, ny9.replace(hour=15, minute=50), ny9 + timedelta(days=1), ny9.replace(hour=16))]
+sc2.get_clock = lambda: clocks9.pop(0) if len(clocks9) > 1 else clocks9[0]
+sip.session()
+t9 = json.loads(sip.TODAY.read_text())
+ok(sc2.orders == {} and sc2.closed == [] and sc2.pos == {"SPY": 10}, "practice day: no orders, nothing touched")
+ok(t9["mode"] == "practice" and t9["day"] == DAY9, "practice results saved for the shared report")
+sec, bad = review.bot9_section(DAY9, t9, {"dt": {}, "sip": {}})
+ok("PRACTICE" in sec and "Bot #9" in sec, "shared daily report has a bot #9 section")
+config.SIP_TRADE_FROM = "2026-11-27"
+
+print("10. backtest pieces")
 fr = pd.DataFrame({"ts": pd.date_range("2026-01-05 10:00", periods=8, freq="15min", tz="America/New_York"),
                    "symbol": "SPY", "day": "2026-01-05", "time_of_day": 0.3})
 held = model.hold_for_horizon(fr, np.array([1, 0, 0, 0, 0, -1, 0, 0]), 4)

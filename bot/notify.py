@@ -43,11 +43,11 @@ def send(title: str, message: str, urgent: bool = False) -> bool:
         return False
 
 
-def start_run(mode: str) -> bool:
-    """Start another run of this bot's workflow (used to hand over a long trading day
-    to a fresh job, to restart after a crash, and to retrain)."""
+def start_run(mode: str, workflow: str = "bot.yml") -> bool:
+    """Start another run of a workflow (bot.yml = bot #8, sip.yml = bot #9). Used to hand
+    over a long trading day to a fresh job, to restart after a crash, and to retrain."""
     try:
-        r = _api("actions/workflows/bot.yml/dispatches", "POST",
+        r = _api(f"actions/workflows/{workflow}/dispatches", "POST",
                  {"ref": "main", "inputs": {"mode": mode}})
         print(f"started a new '{mode}' run" if r is not None else "[not on GitHub - no new run]")
         return r is not None

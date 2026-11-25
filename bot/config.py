@@ -74,6 +74,23 @@ FIRST_TRADING_DAY = os.getenv("FIRST_TRADING_DAY", "2026-11-25")   # no reports 
 SESSION_MAX_MINUTES = 300           # one cloud job (limit 340 min); then it hands over to a fresh one
 MAX_RESTARTS_PER_DAY = 3
 
+# --- Two bots share this paper account (Miles: "combine them into one account, split the money")
+#  bot #8 "dt"  = this ML day-trader, trades ONLY the 20 markets in UNIVERSE
+#  bot #9 "sip" = stocks-in-play breakouts, trades ONLY other US stocks (never the 20 above)
+# Because their stocks never overlap, each bot only ever touches its own positions.
+BUDGET_SHARE = {"dt": float(os.getenv("DT_SHARE", "0.5")), "sip": float(os.getenv("SIP_SHARE", "0.5"))}
+
+# --- Bot #9: stocks-in-play opening-range breakout (Zarattini & Aziz 2023) -------------
+SIP_TOP_N = int(os.getenv("SIP_TOP_N", "20"))              # stocks per day
+SIP_STOP_ATR = float(os.getenv("SIP_STOP_ATR", "0.10"))    # stop = 10% of the 14-day ATR
+SIP_RISK_PCT = 0.01                                        # lose at most 1% of its budget per trade
+SIP_MAX_LEVERAGE = float(os.getenv("SIP_MAX_LEVERAGE", "1.0"))   # 1 = no borrowing (Miles decides)
+SIP_TRADE_FROM = os.getenv("SIP_TRADE_FROM", "2026-11-27")      # practice (watch only) before this day
+SIP_MIN_PRICE, SIP_MIN_AVG_VOL, SIP_MIN_ATR = 5.0, 1_000_000, 0.50
+SIP_MAX_POSITION_PCT = 0.25                                # never more than 25% of its budget in one stock
+SIP_DAILY_STOP_PCT = 0.06                                  # down 6% of its budget today -> close all, stop
+SIP_PARAMS = ROOT / "logs" / "sip_params.json"            # settings it learned (monthly re-test)
+
 MODEL_PATH = ROOT / "models" / "model.joblib"            # the champion (trades)
 CHALLENGER_PATH = ROOT / "models" / "challenger.joblib"  # this week's new model (practice guesses only)
 CONTEST_MIN_DAYS = 5     # champion vs. challenger: compare live guesses for at least 5 trading days

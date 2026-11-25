@@ -29,6 +29,21 @@ instructions).
 - Delete logs, reports, models or history. Force-push. Rewrite git history.
 - Disable safety checks or tests to make something pass.
 
+## Two bots in this repo, one paper account
+- Bot #8 (`run.py`, `.github/workflows/bot.yml`): the ML day-trader, only the 20 markets in
+  `bot/config.py` UNIVERSE. Files: `logs/state.json`, `logs/last_error.txt`.
+- Bot #9 (`run_sip.py`, `bot/sip.py`, `.github/workflows/sip.yml`): stocks-in-play breakouts,
+  only OTHER stocks. Files: `logs/sip_state.json`, `logs/sip_today.json`,
+  `logs/sip_last_error.txt`, `logs/sip_learned.json`, `logs/sip_trades.csv`.
+  Restart it with ONE line `session` in `requests/sip.txt` (commit + push).
+- The two must NEVER trade the same stock. Never change that, the money split
+  (`BUDGET_SHARE`), `SIP_MAX_LEVERAGE` (borrowing - Miles decides) or `SIP_TRADE_FROM`.
+- For bot #9 also check: `sip_today.json` has today's date; `sip_state.json` restarts/refused;
+  after the close NO bot #9 position may be left (if `sip_today.json` mode is `trade`, any
+  open non-UNIVERSE position at Alpaca would show in tomorrow's report - you can't see
+  Alpaca, so if bot #9 crashed after 3:45 PM ET, push `session` to requests/sip.txt: when the
+  market is closed its recover step sweeps leftovers).
+
 ## What "something went wrong" looks like
 - `reports/latest.md` starts with ⚠️, or today's report is missing on a trading day
   (`logs/state.json` -> `report_sent` != today, New York time).

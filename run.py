@@ -73,6 +73,9 @@ def after_close(c, st, bundle):
     elif st.get("research_month") != day[:7]:     # once a month: re-run the research lab
         st["research_month"] = day[:7]
         notify.start_run("research")
+    elif st.get("sip_retune_month") != day[:7]:   # once a month (next day): bot #9 re-tests its settings
+        st["sip_retune_month"] = day[:7]
+        notify.start_run("research_orb")
 
 
 def session(watch_flag=False):

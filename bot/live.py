@@ -57,11 +57,46 @@ def guard(c) -> tuple:
                        "Use keys from the separate Alpaca paper account.")
     if not config.PAPER:
         return False, "not a paper account"
-    foreign = sorted(p.symbol for p in c.get_all_positions() if p.symbol not in config.UNIVERSE)
-    if foreign:
-        return False, ("the account holds stocks this bot never trades (" + ", ".join(foreign[:8]) +
-                       "). It looks shared with another bot, so this bot won't trade in it.")
+    # (other stocks in the account belong to bot #9, which never trades these 20 markets)
     return True, ""
+
+
+def day_start_ny(day: str):
+    return datetime.fromisoformat(day).replace(tzinfo=NY)
+
+
+def fills_today(c, day: str) -> list:
+    from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
+    out, after = [], day_start_ny(day)
+    orders = c.get_orders(GetOrdersRequest(status=QueryOrderStatus.CLOSED, after=after, limit=500))
+    for o in orders:
+        if o.filled_at is not None and float(o.filled_qty or 0) > 0:
+            out.append(o)
+    return out
+
+
+def own_day_pnl(c, day: str, mine) -> float:
+    """Today's profit/loss of one bot only: money in/out of its fills today + what its open
+    positions are worth now (a day trader starts every day flat, so this is exact)."""
+    cash = 0.0
+    for o in fills_today(c, day):
+        if mine(o.symbol):
+            q, p = float(o.filled_qty), float(o.filled_avg_price)
+            cash += q * p if o.side.value == "sell" else -q * p
+    mv = sum(float(p.market_value) for p in c.get_all_positions() if mine(p.symbol))
+    return cash + mv
+
+
+def is_dt(sym: str) -> bool:
+    return sym in config.UNIVERSE
+
+
+def budget(c, bot: str) -> float:
+    """This bot's share of the account (based on yesterday's closing value, so it doesn't
+    move during the day)."""
+    acct = c.get_account()
+    return float(acct.last_equity or acct.equity) * config.BUDGET_SHARE[bot]
 
 
 def own_positions(c) -> dict:
@@ -194,11 +229,10 @@ def rebalance(c, tgt: dict, latest, st: dict, watch_only: bool):
 
 
 def cycle(c, bundle, st: dict, watch_only: bool) -> str:
-    acct = c.get_account()
-    equity, start = float(acct.equity), float(acct.last_equity)
-    day_pnl = equity / start - 1 if start else 0.0
-    log.info("Equity $%.2f  (today %+.2f%%)", equity, day_pnl * 100)
-    st.setdefault("start_equity", equity)
+    equity = budget(c, "dt")                       # bot #8 trades with its half of the account
+    day_pnl = own_day_pnl(c, today_ny(), is_dt) / equity if equity else 0.0
+    log.info("Bot #8 budget $%.2f  (its trades today %+.2f%%)", equity, day_pnl * 100)
+    st.setdefault("start_equity", float(c.get_account().equity))
 
     if day_pnl <= -config.DAILY_LOSS_LIMIT_PCT:
         log.warning("Daily loss limit hit. Closing its positions, done for today.")
