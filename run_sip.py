@@ -126,9 +126,10 @@ def ordertest():
                                           time_in_force=TimeInForce.DAY, stop_price=round(px * 3, 2)))
     res["bot #9 buy-stop (F, 3x price)"] = o9a.id
     try:
-        o9b = c.submit_order(StopOrderRequest(symbol="F", qty=1, side=OrderSide.SELL,
-                                              time_in_force=TimeInForce.DAY, stop_price=round(px * 0.3, 2)))
-        res["bot #9 sell-stop / short (F, 0.3x price)"] = o9b.id
+        d2 = sip._bars(["T"], live.day_start_ny(live.today_ny()) - __import__("datetime").timedelta(days=10), live.day_start_ny(live.today_ny()), feed="sip")
+        o9b = c.submit_order(StopOrderRequest(symbol="T", qty=1, side=OrderSide.SELL,
+                                              time_in_force=TimeInForce.DAY, stop_price=round(float(d2["close"].iloc[-1]) * 0.3, 2)))
+        res["bot #9 sell-stop / short (T, 0.3x price)"] = o9b.id
     except Exception as e:
         print("  short-entry stop refused (would be skipped by the bot):", str(e)[:120])
     o8 = c.submit_order(LimitOrderRequest(symbol="SPY", qty=1, side=OrderSide.BUY,
