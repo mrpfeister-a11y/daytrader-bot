@@ -264,6 +264,13 @@ def research_orb():
                     + err + "\n```")
 
 
+def watchdog_note():
+    """The Claude watchdog emails Miles: requests/run.txt = 'notify' + the message below it."""
+    lines = (config.ROOT / "requests" / "run.txt").read_text(encoding="utf-8-sig").splitlines()
+    msg = "\n".join(lines[1:]).strip() or "(empty message)"
+    notify.send("watchdog", msg, urgent=msg.startswith("⚠"))
+
+
 def chain():
     if CHAIN.exists():
         CHAIN.unlink()
@@ -283,7 +290,7 @@ def main():
     log.info("run.py %s%s", mode, " (watch only)" if watch else "")
     {"session": lambda: session(watch), "report": report, "train": train, "check": check,
      "recover": recover, "chain": chain, "research": research,
-     "research_orb": research_orb}.get(mode, check)()
+     "research_orb": research_orb, "notify": watchdog_note}.get(mode, check)()
 
 
 if __name__ == "__main__":
