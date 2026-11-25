@@ -102,11 +102,9 @@ def session(watch_flag=False):
                 time.sleep(min(until_open.total_seconds() + 5, 900))
                 continue
             break                                     # done for today
-        if st.get("morning_sent") != live.today_ny():
+        if st.get("morning_sent") != live.today_ny():   # (no email - Miles wants fewer; the report covers it)
             st["morning_sent"] = live.today_ny()
-            notify.send("started " + datetime.now(live.NY).strftime("%a %b %d"),
-                        "✅ Running. Mode: " + ("**WATCH ONLY** (no orders)" if watch else "**PAPER TRADING**")
-                        + ". Report after the close.")
+            log.info("Started for the day. Mode: %s", "WATCH ONLY" if watch else "PAPER TRADING")
         if clock.next_close - now <= timedelta(minutes=config.FLATTEN_MINUTES_BEFORE_CLOSE):
             log.info("Near the close: making sure it holds nothing.")
             if safe:

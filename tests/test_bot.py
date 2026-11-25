@@ -174,7 +174,7 @@ def cycle_forcing(cl, bun, st, watch):
 
 live.cycle = cycle_forcing
 run.session()
-ok(any("started" in s[0] for s in SENT), "morning 'started' email")
+ok(not any("started" in s[0] for s in SENT), "no morning email (only the report)")
 ok({o.symbol for o in c.orders} == {"SPY", "QQQ"}, "bought SPY, shorted QQQ")
 ok(c.pos == {}, "holds nothing at the end of the day")
 rep = [s for s in SENT if s[0].startswith("report")]
