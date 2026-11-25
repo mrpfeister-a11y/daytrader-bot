@@ -1,0 +1,14 @@
+{
+ "days": {
+  "2026-11-25": {
+   "mode": "practice",
+   "pnl": -116.31,
+   "pct": -0.424,
+   "trades": 17,
+   "won": 1
+  }
+ },
+ "slippage_bps": null,
+ "real_days": 0,
+ "real_total_pct": 0
+}
