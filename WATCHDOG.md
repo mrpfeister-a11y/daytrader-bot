@@ -50,5 +50,26 @@ instructions).
 - `logs/state.json` -> `restarts` has today's date, or `refused` has today's date.
 - `logs/last_error.txt` changed today (compare with `git log -1 --format=%cd -- logs/last_error.txt`).
 - Fewer than ~20 checks today (`cycles` in state.json) on a full trading day.
+- Logs that went BACKWARDS today (a later job overwrote an earlier one's notes; this
+  happened on Nov 25, 2026). Check every day:
+  `git log --since="<today> 00:00" --format=%h -- logs/state.json logs/decisions.csv logs/sip_state.json`
+  and, for each of those commits, today's `cycles` in `logs/state.json` and the number of
+  today's rows in `logs/decisions.csv` (`bar_ts` starts with today's date). If an earlier commit
+  today has rows or a higher count that the newest version lacks, that is lost data.
 - A "safety stop" means the keys point at the wrong account: do NOT try to fix that, email
   Miles (⚠️) that he needs to check which Alpaca keys are in the day-trader's GitHub secrets.
+
+## How to repair lost logs (you MAY do this - it only adds back data, never deletes)
+1. `logs/decisions.csv` and `logs/trades.csv`: take the union of the rows from the earlier
+   commit(s) and the current file (drop exact duplicates, sort by the first column), write it back.
+2. `logs/state.json` `cycles[today]`: if jobs overwrote each other, set it to the sum of each
+   job's count (the count at each hand-over commit `bot: push`/`bot: session` before the next job
+   started, plus the final job's count). Keep every other key from the NEWEST file.
+3. Bot #9's `logs/sip_*` files: same idea; never invent results, only copy rows that existed.
+4. Find the cause before you finish. Both `.github/workflows/bot.yml` and `sip.yml` must have
+   `actions/checkout@v4` with `ref: main` (a hand-over or restart run must load the newest saved
+   logs, not the old commit it was started from). If that is missing, or another cause shows up
+   (for example the save step's `git pull --rebase -X theirs`), fix it as a bug.
+5. Run the tests, commit with a message that says "restore lost logs", push, and email Miles a
+   short 🛠️ note: what was lost, that it is restored, and that no trades or money were affected
+   (trades are always re-read from Alpaca for the report). Don't re-send the report just for this.

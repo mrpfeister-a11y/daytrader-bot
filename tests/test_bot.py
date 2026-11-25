@@ -434,4 +434,10 @@ held = model.hold_for_horizon(fr, np.array([1, 0, 0, 0, 0, -1, 0, 0]), 4)
 ok(list(held) == [1, 1, 1, 1, 0, -1, -1, -1], "backtest holds a trade for its horizon")
 ok(len(model.variants()) * len(config.ENTRY_PROBS) == 16, "16 ways of trading are compared")
 
+print("11. hand-over keeps the morning's logs")
+for wf in ("bot.yml", "sip.yml"):
+    txt = (config.ROOT / ".github" / "workflows" / wf).read_text(encoding="utf-8")
+    after = txt.split("actions/checkout@v4", 1)[1][:200]
+    ok("ref: main" in after, f"{wf}: every run loads the newest saved logs (bug of Nov 25)")
+
 print(f"\nALL {passed} TESTS PASSED")
