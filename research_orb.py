@@ -224,7 +224,13 @@ def main():
     syms = universe()
     d = daily(client, syms)
     print(f"[orb] {len(d):,} daily rows ({(time.time() - t0) / 60:.0f} min)", flush=True)
-    spy = d[d["symbol"] == "SPY"].set_index("day")["close"].astype(float).pct_change().fillna(0)
+    # the S&P 500 fund is only the yardstick (it's an ETF, so it isn't in the stock universe)
+    s = _bars(client, ["SPY"], datetime.fromisoformat(START).replace(tzinfo=timezone.utc),
+              datetime.now(timezone.utc) - timedelta(minutes=20))
+    s["day"] = s["timestamp"].dt.tz_convert(NY).dt.tz_localize(None).dt.normalize()
+    spy = s.set_index("day")["close"].astype(float).pct_change().fillna(0)
+    if spy.empty:
+        raise RuntimeError("could not download the S&P 500 (SPY) prices for the comparison")
     cand = candidates(d)
     print(f"[orb] {len(cand):,} candidate stock-days, ~{len(cand) / cand['day'].nunique():.0f} per day", flush=True)
     ob = opening_bars(client, cand)
