@@ -218,7 +218,15 @@ def manage(c, st, stop_atr):
             t.update(stop_id=str(so.id), fill=fill, stop=stop, filled_qty=qty)
             log.info("  bot #9 %s filled at %.2f, stop-loss at %.2f", sym, fill, stop)
         except Exception as e:
-            log.warning("  bot #9 stop-loss for %s refused (will retry): %s", sym, str(e)[:150])
+            # Never leave a trade without protection: if the stop-loss is refused (e.g. the price
+            # already jumped past it), close the trade now instead.
+            log.warning("  bot #9 stop-loss for %s refused (%s) - closing the trade now", sym, str(e)[:120])
+            try:
+                c.close_position(sym)
+                t.update(stop_id="closed-instead", fill=fill, filled_qty=qty)
+                st.setdefault("refused", []).append(sym)
+            except Exception as e2:
+                log.warning("  bot #9 could not close %s either (will retry): %s", sym, str(e2)[:120])
 
 
 def flatten(c, reason="end of day"):

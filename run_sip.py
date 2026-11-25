@@ -105,6 +105,57 @@ def dryrun():
           f"{sum(1 for x in res if x['triggered'])} triggered trades")
 
 
+def ordertest():
+    """Real orders in the shared paper account that can NEVER fill, then cancelled:
+    proves Alpaca accepts both bots' order types and that each bot cleans up only its own."""
+    import time as _t
+    from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.trading.requests import LimitOrderRequest, StopOrderRequest
+    c = live.client()
+    ok, why = live.guard(c)
+    if not ok:
+        print("SAFETY STOP:", why)
+        return
+    before = sorted(p.symbol for p in c.get_all_positions())
+    print("positions before:", before or "none")
+    d = sip._bars(["F"], live.day_start_ny(live.today_ny()) - __import__("datetime").timedelta(days=10),
+                  live.day_start_ny(live.today_ny()), feed="sip")
+    px = float(d["close"].iloc[-1])
+    res = {}
+    o9a = c.submit_order(StopOrderRequest(symbol="F", qty=1, side=OrderSide.BUY,
+                                          time_in_force=TimeInForce.DAY, stop_price=round(px * 3, 2)))
+    res["bot #9 buy-stop (F, 3x price)"] = o9a.id
+    try:
+        o9b = c.submit_order(StopOrderRequest(symbol="F", qty=1, side=OrderSide.SELL,
+                                              time_in_force=TimeInForce.DAY, stop_price=round(px * 0.3, 2)))
+        res["bot #9 sell-stop / short (F, 0.3x price)"] = o9b.id
+    except Exception as e:
+        print("  short-entry stop refused (would be skipped by the bot):", str(e)[:120])
+    o8 = c.submit_order(LimitOrderRequest(symbol="SPY", qty=1, side=OrderSide.BUY,
+                                          time_in_force=TimeInForce.DAY, limit_price=1.00))
+    res["bot #8 order (SPY limit $1)"] = o8.id
+    _t.sleep(3)
+    for k, i in res.items():
+        print(f"  placed {k}: {c.get_order_by_id(i).status.value}")
+    sip.flatten(c, "order test")                   # bot #9's clean-up
+    _t.sleep(3)
+    st8 = c.get_order_by_id(o8.id).status.value
+    print(f"  after bot #9 clean-up: bot #8's order is '{st8}' (must still be open)")
+    for k, i in res.items():
+        if "bot #9" in k:
+            print(f"  after bot #9 clean-up: {k} is '{c.get_order_by_id(i).status.value}' (must be canceled)")
+    live.cancel_own_orders(c)                      # bot #8's clean-up
+    _t.sleep(3)
+    print(f"  after bot #8 clean-up: its order is '{c.get_order_by_id(o8.id).status.value}' (must be canceled)")
+    after = sorted(p.symbol for p in c.get_all_positions())
+    print("positions after:", after or "none", "- unchanged" if after == before else "- CHANGED!")
+    day = live.today_ny()
+    print(f"  bot #8 result today ${live.own_day_pnl(c, day, live.is_dt):,.2f}, "
+          f"bot #9 ${live.own_day_pnl(c, day, sip.mine):,.2f}, budgets ${live.budget(c, 'dt'):,.0f} / "
+          f"${live.budget(c, 'sip'):,.0f}")
+    print("ORDER TEST DONE")
+
+
 def main():
     setup_logging()
     mode = sys.argv[1] if len(sys.argv) > 1 else "session"
@@ -115,7 +166,7 @@ def main():
             mode = "check"
     log.info("run_sip.py %s", mode)
     {"session": session, "recover": recover, "chain": chain, "check": check,
-     "dryrun": dryrun}.get(mode, check)()
+     "dryrun": dryrun, "ordertest": ordertest}.get(mode, check)()
 
 
 if __name__ == "__main__":
