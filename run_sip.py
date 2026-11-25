@@ -85,6 +85,26 @@ def check():
                 urgent=not ok)
 
 
+def dryrun():
+    """Do today's whole morning scan + pick on real data (no orders, no email) - a test."""
+    import time as _t
+    c = live.client()
+    day = live.today_ny()
+    t0 = _t.time()
+    cands = sip.candidates(c, day)
+    avg = sip.opening_volume_avg(cands)
+    picks = sip.pick(cands, avg, day, sip.params()["top_n"])
+    sizes = sip.plan_sizes(picks, live.budget(c, "sip"), sip.params()["stop_atr"]) if len(picks) else []
+    print(f"DRY RUN {day}: {len(cands)} candidates, {len(avg)} with opening-volume history, "
+          f"{len(picks)} picks in {_t.time() - t0:.0f}s")
+    for (s, r), q in zip(picks.iterrows(), sizes):
+        print(f"  {s:6} {'BUY ' if r['side'] == 1 else 'SHORT'} rvol {r['rvol']:.1f}  level "
+              f"{r['high'] if r['side'] == 1 else r['low']:.2f}  atr {r['atr']:.2f}  shares {q}")
+    res = sip.simulate(picks, list(sizes), day, sip.params()["stop_atr"]) if len(picks) else []
+    print(f"  practice result today: ${sum(x['pnl'] for x in res):,.2f} from "
+          f"{sum(1 for x in res if x['triggered'])} triggered trades")
+
+
 def main():
     setup_logging()
     mode = sys.argv[1] if len(sys.argv) > 1 else "session"
@@ -94,7 +114,8 @@ def main():
         except (OSError, IndexError):
             mode = "check"
     log.info("run_sip.py %s", mode)
-    {"session": session, "recover": recover, "chain": chain, "check": check}.get(mode, check)()
+    {"session": session, "recover": recover, "chain": chain, "check": check,
+     "dryrun": dryrun}.get(mode, check)()
 
 
 if __name__ == "__main__":
