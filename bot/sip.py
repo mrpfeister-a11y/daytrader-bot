@@ -283,13 +283,15 @@ def simulate(picks: pd.DataFrame, sizes, day: str, stop_atr: float) -> list:
 
 
 def real_results(c, st) -> list:
-    """Per-stock results of today's real trades (from Alpaca fills)."""
-    by = {}
+    """Per-stock results of today's real trades (from Alpaca fills, plus anything not closed yet)."""
+    time.sleep(10)                                   # let the closing orders fill first
+    mv = {p.symbol: float(p.market_value) for p in c.get_all_positions() if mine(p.symbol)}
+    by = {s: {"symbol": s, "cash": v} for s, v in mv.items()}
     for o in live.fills_today(c, st["day"]):
         if not mine(o.symbol):
             continue
         q, p = float(o.filled_qty), float(o.filled_avg_price)
-        b = by.setdefault(o.symbol, {"symbol": o.symbol, "cash": 0.0, "bought": 0.0, "sold": 0.0})
+        b = by.setdefault(o.symbol, {"symbol": o.symbol, "cash": 0.0})
         b["cash"] += q * p if o.side.value == "sell" else -q * p
     out = []
     for sym, b in by.items():

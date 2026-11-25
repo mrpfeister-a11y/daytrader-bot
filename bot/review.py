@@ -239,6 +239,8 @@ def bot9_section(day: str, t9: dict, hist: dict) -> tuple:
         lines.append("⏸️ It paused itself (real results were losing after 20+ days): practice only "
                      "until its monthly re-test passes.")
     bad = [f"bot #9: Alpaca refused {len(t9['refused'])} order(s)"] if t9.get("refused") else []
+    if not picks:
+        bad.append("bot #9 picked no stocks today (possible price-data problem)")
     return "\n\n".join(x for x in lines if x is not None), bad
 
 
