@@ -377,14 +377,14 @@ def daily_report(c, bundle, st: dict, day: str) -> tuple:
         b9 = (t9 or {}).get("budget") or last * config.BUDGET_SHARE["sip"]
         tot9 = sum(hist["sip"].values())
         write_summary(day, {
-            "account": {"equity": round(equity, 2), "day_usd": round(day_usd, 2), "day_pct": round(acct_day_pct, 3),
-                        "total_usd": round(tot_usd, 2), "total_pct": round(tot_pct, 3)},
-            "bot8": {"budget": round(b8, 2), "mode": mode, "day_usd": round(pnl8, 2), "day_pct": round(day_pct, 3),
-                     "total_usd": round(tot8, 2), "total_pct": round(tot8 / b8 * 100, 3) if b8 else 0.0,
+            "account": {"equity": round(equity, 2), "day_usd": round(day_usd, 2), "day_pct": round(acct_day_pct, 4),
+                        "total_usd": round(tot_usd, 2), "total_pct": round(tot_pct, 4)},
+            "bot8": {"budget": round(b8, 2), "mode": mode, "day_usd": round(pnl8, 2), "day_pct": round(day_pct, 4),
+                     "total_usd": round(tot8, 2), "total_pct": round(tot8 / b8 * 100, 4) if b8 else 0.0,
                      "checks": cycles, "problems": problems[:], "trades": trades8},
             "bot9": {"budget": round(b9, 2), "mode": (t9 or {}).get("mode", "missing"),
-                     "day_usd": round(pnl9, 2), "day_pct": round(pnl9 / b9 * 100, 3) if b9 else 0.0,
-                     "total_usd": round(tot9, 2), "total_pct": round(tot9 / b9 * 100, 3) if b9 else 0.0,
+                     "day_usd": round(pnl9, 2), "day_pct": round(pnl9 / b9 * 100, 4) if b9 else 0.0,
+                     "total_usd": round(tot9, 2), "total_pct": round(tot9 / b9 * 100, 4) if b9 else 0.0,
                      "picked": len((t9 or {}).get("results", [])), "triggered": len(res9),
                      "won": sum(1 for r in res9 if r["pnl"] > 0),
                      "results": [{"symbol": r["symbol"], "side": "buy" if r["side"] == 1 else "short",
