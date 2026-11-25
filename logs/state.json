@@ -1,7 +1,14 @@
 {
  "guard_ok": true,
  "guard_reason": "",
- "guard_day": "2026-11-24",
+ "guard_day": "2026-11-25",
  "restarts": {},
- "report_sent": "2026-11-24"
+ "report_sent": "2026-11-24",
+ "morning_sent": "2026-11-25",
+ "start_equity": 54849.09,
+ "entries": {},
+ "last_cycle": "2026-11-25T18:30:33.626284+00:00",
+ "cycles": {
+  "2026-11-25": 17
+ }
 }
