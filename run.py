@@ -58,7 +58,7 @@ def check_guard(c, st) -> bool:
 def after_close(c, st, bundle):
     """Report once per trading day, then retrain if the model is a week old."""
     day = live.today_ny()
-    if st.get("report_sent") == day or not is_trading_day(c, day):
+    if day < config.FIRST_TRADING_DAY or st.get("report_sent") == day or not is_trading_day(c, day):
         return
     title, md, urgent = review.daily_report(c, bundle, st, day)
     notify.send(title, md, urgent=urgent)
@@ -210,7 +210,25 @@ def check():
 
 
 def recover():
-    """The job failed or was cut off. Tell Miles, and restart (limited per day)."""
+    """The job failed or was cut off. Tell Miles, and restart (limited per day).
+    Called as: run.py recover <job mode> <job status: failure|cancelled>."""
+    job = sys.argv[2] if len(sys.argv) > 2 else "session"
+    status = sys.argv[3] if len(sys.argv) > 3 else "failure"
+    if job == "push":
+        try:
+            job = (config.ROOT / "requests" / "run.txt").read_text(encoding="utf-8-sig").split()[0]
+        except (OSError, IndexError):
+            job = "check"
+    if status == "cancelled":
+        # Someone stopped it by hand (a time-out shows up as a failure instead): no alarm.
+        print(f"'{job}' run was cancelled by hand - nothing to fix.")
+        return
+    if job != "session":
+        err = ERR.read_text()[-1500:] if ERR.exists() else "(see the run log)"
+        notify.send(f"background job '{job}' stopped",
+                    "This was not trading (trading is not affected). The watchdog will look at it.\n\n"
+                    f"```\n{err}\n```")
+        return
     st = live.load_state()
     day = live.today_ny()
     n = st.setdefault("restarts", {}).get(day, 0)

@@ -78,7 +78,7 @@ jobs:
       #  finished, so it always sees the saved logs)
       - name: Something broke - email + restart
         if: failure() || cancelled()
-        run: python run.py recover
+        run: python run.py recover "${{ steps.pick.outputs.mode }}" "${{ job.status }}"
 
       - name: Hand the day over to a fresh job
         if: success()

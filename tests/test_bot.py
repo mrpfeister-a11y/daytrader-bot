@@ -17,6 +17,7 @@ from bot import config, data, features, live, model, notify, review  # noqa: E40
 
 config.LOG_DIR = ROOT / "tests" / "_logs"
 config.REPORT_DIR = ROOT / "tests" / "_reports"
+config.FIRST_TRADING_DAY = "2000-01-01"   # the fake days are older than the real first day
 live.STATE = config.LOG_DIR / "state.json"
 review.LEARNED = config.LOG_DIR / "learned.json"
 review.DAYS = config.LOG_DIR / "live_days.csv"
@@ -235,6 +236,16 @@ for _ in range(3):
     run.recover()
 ok(STARTED.count("session") == 3 and any("needs a look" in s[0] for s in SENT),
    "max 3 restarts a day, then asks for help")
+n_sent = len(SENT)
+STARTED.clear()
+sys.argv = ["run.py", "recover", "research_orb", "cancelled"]
+run.recover()
+ok(len(SENT) == n_sent and STARTED == [], "a run cancelled by hand: no alarm, no restart")
+sys.argv = ["run.py", "recover", "research", "failure"]
+run.recover()
+ok(len(SENT) == n_sent + 1 and not SENT[-1][2] and STARTED == [],
+   "a research job failing: one calm note, no restart, no report")
+sys.argv = ["tests/test_bot.py"]
 run.CHAIN.write_text("session")
 STARTED.clear()
 run.chain()

@@ -70,6 +70,7 @@ CLOUD_FLATTEN_MINUTES = 45          # old one-shot cloud mode only
 
 # --- Learning from its own live results ------------------------------------
 LIVE_REVIEW_MIN_DAYS = 20           # after this many trading days, compare live vs. backtest
+FIRST_TRADING_DAY = os.getenv("FIRST_TRADING_DAY", "2026-11-25")   # no reports for days before this
 SESSION_MAX_MINUTES = 300           # one cloud job (limit 340 min); then it hands over to a fresh one
 MAX_RESTARTS_PER_DAY = 3
 
