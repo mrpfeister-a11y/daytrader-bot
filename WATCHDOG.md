@@ -44,6 +44,12 @@ instructions).
   Alpaca, so if bot #9 crashed after 3:45 PM ET, push `session` to requests/sip.txt: when the
   market is closed its recover step sweeps leftovers).
 
+## Market holidays are normal
+On a US market holiday (e.g. Thanksgiving) the bots see the market is closed and stop: no checks,
+no trades, no report, no `sip_today.json` for today. That is NOT a problem - send nothing.
+(Tell-tale: today's session runs were short, nothing errored, and nothing was logged for today.
+2026 holidays still ahead: Thu Nov 26 and Fri Dec 25; Fri Nov 27 and Thu Dec 24 close early at 1 PM ET.)
+
 ## What "something went wrong" looks like
 - `reports/latest.md` starts with ⚠️, or today's report is missing on a trading day
   (`logs/state.json` -> `report_sent` != today, New York time).
