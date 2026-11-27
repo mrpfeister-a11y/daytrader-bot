@@ -1,138 +1,97 @@
 {
- "day": "2026-11-25",
- "made": "2026-11-25T22:59:14+00:00",
+ "day": "2026-11-27",
+ "made": "2026-11-27T18:01:00+00:00",
  "account": {
-  "equity": 54873.8,
-  "day_usd": 24.71,
-  "day_pct": 0.0451,
-  "total_usd": 24.71,
-  "total_pct": 0.0451
+  "equity": 54794.85,
+  "day_usd": -78.86,
+  "day_pct": -0.1437,
+  "total_usd": -54.24,
+  "total_pct": -0.0989
  },
  "bot8": {
-  "budget": 27424.54,
+  "budget": 27436.85,
   "mode": "trade",
-  "day_usd": 24.71,
-  "day_pct": 0.09,
+  "day_usd": 0.0,
+  "day_pct": 0.0,
   "total_usd": 24.71,
-  "total_pct": 0.09,
-  "checks": 25,
-  "problems": [],
-  "trades": [
-   {
-    "symbol": "AMD",
-    "orders": 2,
-    "traded": 2417,
-    "pnl": 14.85
-   },
-   {
-    "symbol": "XLK",
-    "orders": 2,
-    "traded": 2480,
-    "pnl": 6.33
-   },
-   {
-    "symbol": "NVDA",
-    "orders": 2,
-    "traded": 2661,
-    "pnl": 3.53
-   }
-  ]
+  "total_pct": 0.0901,
+  "checks": 13,
+  "problems": [
+   "only 13 of ~24 checks ran today",
+   "bot #9: Alpaca refused 7 order(s)"
+  ],
+  "trades": []
  },
  "bot9": {
-  "budget": 27424.54,
-  "mode": "practice",
-  "day_usd": -116.31,
-  "day_pct": -0.424,
-  "total_usd": 0.0,
-  "total_pct": 0.0,
-  "picked": 20,
-  "triggered": 17,
+  "budget": 27436.85,
+  "mode": "trade",
+  "day_usd": -78.86,
+  "day_pct": -0.2874,
+  "total_usd": -78.86,
+  "total_pct": -0.2874,
+  "picked": 12,
+  "triggered": 12,
   "won": 1,
   "results": [
    {
-    "symbol": "WCN",
+    "symbol": "MO",
     "side": "buy",
-    "pnl": 15.74
+    "pnl": 20.88
    },
    {
-    "symbol": "VTR",
-    "side": "short",
-    "pnl": -3.93
-   },
-   {
-    "symbol": "IFF",
+    "symbol": "EUFN",
     "side": "buy",
-    "pnl": -5.2
+    "pnl": -3.24
    },
    {
-    "symbol": "CBRE",
-    "side": "short",
-    "pnl": -5.26
-   },
-   {
-    "symbol": "SFNC",
-    "side": "short",
-    "pnl": -5.43
-   },
-   {
-    "symbol": "PHM",
-    "side": "short",
-    "pnl": -5.51
-   },
-   {
-    "symbol": "BNTX",
-    "side": "short",
-    "pnl": -5.51
-   },
-   {
-    "symbol": "COLD",
+    "symbol": "VFLO",
     "side": "buy",
-    "pnl": -5.95
+    "pnl": -3.24
    },
    {
-    "symbol": "WDAY",
+    "symbol": "VRTX",
+    "side": "short",
+    "pnl": -3.49
+   },
+   {
+    "symbol": "EQH",
     "side": "buy",
-    "pnl": -6.54
+    "pnl": -7.5
    },
    {
-    "symbol": "XOVR",
+    "symbol": "ALKS",
     "side": "short",
-    "pnl": -6.85
+    "pnl": -7.56
    },
    {
-    "symbol": "MT",
+    "symbol": "XP",
     "side": "short",
-    "pnl": -7.05
+    "pnl": -7.79
    },
    {
-    "symbol": "AEO",
+    "symbol": "RLAY",
     "side": "short",
-    "pnl": -7.58
+    "pnl": -9.0
    },
    {
-    "symbol": "DAR",
+    "symbol": "GLUE",
+    "side": "short",
+    "pnl": -12.69
+   },
+   {
+    "symbol": "SEDG",
     "side": "buy",
-    "pnl": -7.94
+    "pnl": -13.94
    },
    {
-    "symbol": "NTNX",
+    "symbol": "ERO",
     "side": "short",
-    "pnl": -11.82
+    "pnl": -14.7
    },
    {
-    "symbol": "FDMT",
-    "side": "buy",
-    "pnl": -12.3
-   },
-   {
-    "symbol": "VSH",
+    "symbol": "ENPH",
     "side": "short",
-    "pnl": -16.51
-   },
-   {
-    "symbol": "QDEL",
-    "side": "buy",
-    "pnl": -18.67
+    "pnl": -16.59
    }
   ]
  }
