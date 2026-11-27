@@ -1,16 +1,25 @@
 ==============================================================================
  STOCKS-IN-PLAY OPENING-RANGE BREAKOUT (Zarattini & Aziz 2023), all US stocks
- dev 2016-01-04 .. 2025-11-21  |  final exam 2025-11-24 .. 2026-11-24
+ dev 2016-01-04 .. 2025-11-25  |  final exam 2025-11-26 .. 2026-11-27
 ==============================================================================
  version                                  DEV/yr  Sharpe  EXAM/yr  Sharpe   maxDD beats SPY days
- paper: up to 4x BORROWED, no slippage    203.3%    4.38   319.5%    4.44  -13.7%      53%
- 4x BORROWED + 5 bps slippage              12.1%    0.56    53.6%    1.44  -28.0%      43%
- 1x (no borrowing) + 5 bps slippage         3.5%    0.56    12.5%    1.44   -7.8%      44%
- BENCHMARK buy & hold S&P 500              14.5%    0.85    10.2%    0.73  -11.5%
+ paper: up to 4x BORROWED, no slippage    203.5%    4.38   314.3%    4.42  -13.7%      53%
+ 4x BORROWED + 5 bps slippage              12.1%    0.57    52.9%    1.43  -28.0%      43%
+ 1x (no borrowing) + 5 bps slippage         3.5%    0.57    12.3%    1.43   -7.8%      44%
+ BENCHMARK buy & hold S&P 500              14.8%    0.86     9.1%    0.66  -11.5%
 ------------------------------------------------------------------------------
  paper: up to 4x BORROWED, no slippage: 2016:+85%  2017:+121%  2018:+213%  2019:+236%  2020:+120%  2021:+378%  2022:+428%  2023:+84%  2024:+217%  2025:+379%  2026:+261%
  4x BORROWED + 5 bps slippage: 2016:-26%  2017:-19%  2018:+15%  2019:+23%  2020:-20%  2021:+75%  2022:+94%  2023:-32%  2024:+16%  2025:+77%  2026:+47%
  1x (no borrowing) + 5 bps slippage: 2016:-7%  2017:-5%  2018:+4%  2019:+6%  2020:-5%  2021:+16%  2022:+19%  2023:-9%  2024:+5%  2025:+16%  2026:+11%
- S&P 500: 2016:+13%  2017:+22%  2018:-5%  2019:+31%  2020:+18%  2021:+29%  2022:-18%  2023:+26%  2024:+25%  2025:+18%  2026:+6%
- (took 15 min)
+ S&P 500: 2016:+13%  2017:+22%  2018:-5%  2019:+31%  2020:+18%  2021:+29%  2022:-18%  2023:+26%  2024:+25%  2025:+18%  2026:+8%
+------------------------------------------------------------------------------
+ BOT #9 MONTHLY RE-TEST (real cost 16.2 bps/side, borrowing 1.0x):
+   top 10, stop  20% ATR: dev   -37.4%/yr (Sharpe -3.34), exam   -40.8%
+   top 10, stop  10% ATR: dev   -34.9%/yr (Sharpe -3.53), exam   -23.8%
+   top 10, stop   5% ATR: dev   -33.9%/yr (Sharpe -3.83), exam   -23.2%
+   top 20, stop  20% ATR: dev   -42.7%/yr (Sharpe -6.99), exam   -46.5%
+   top 20, stop  10% ATR: dev   -40.8%/yr (Sharpe -7.97), exam   -35.9%
+   top 20, stop   5% ATR: dev   -39.3%/yr (Sharpe -8.92), exam   -35.3%
+ -> no setting passed the final exam: bot #9 keeps its current settings
+ (took 4 min)
 ==============================================================================
