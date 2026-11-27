@@ -309,7 +309,8 @@ def main():
     log.info("run.py %s%s", mode, " (watch only)" if watch else "")
     {"session": lambda: session(watch), "report": report, "train": train, "check": check,
      "recover": recover, "chain": chain, "research": research,
-     "research_orb": research_orb, "notify": watchdog_note}.get(mode, check)()
+     "research_orb": research_orb, "notify": watchdog_note,
+     "research_mom": lambda: __import__("research_mom").run()}.get(mode, check)()
 
 
 if __name__ == "__main__":
