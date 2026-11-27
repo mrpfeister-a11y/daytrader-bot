@@ -229,24 +229,48 @@ def manage(c, st, stop_atr):
                 log.warning("  bot #9 could not close %s either (will retry): %s", sym, str(e2)[:120])
 
 
-def flatten(c, reason="end of day"):
-    """Cancel bot #9's open orders and close bot #9's positions (never bot #8's 20 markets)."""
+def flatten(c, reason="end of day", tries=4) -> list:
+    """Cancel bot #9's open orders and close bot #9's positions (never bot #8's 20 markets).
+    Checks afterwards and tries again (a close can be refused while a stop-loss is still being
+    cancelled). Returns the symbols still held after all tries (normally none)."""
     from alpaca.trading.enums import QueryOrderStatus
     from alpaca.trading.requests import GetOrdersRequest
-    for o in c.get_orders(GetOrdersRequest(status=QueryOrderStatus.OPEN, limit=500)):
-        if mine(o.symbol):
-            try:
-                c.cancel_order_by_id(o.id)
-            except Exception:
-                pass
-    time.sleep(2)
-    for p in c.get_all_positions():
-        if mine(p.symbol):
+    left = []
+    for attempt in range(tries):
+        for o in c.get_orders(GetOrdersRequest(status=QueryOrderStatus.OPEN, limit=500)):
+            # keep our own closing (market) orders from earlier tries; cancel entries and stop-losses
+            if mine(o.symbol) and str(getattr(getattr(o, "type", None), "value", "")) != "market":
+                try:
+                    c.cancel_order_by_id(o.id)
+                except Exception:
+                    pass
+        time.sleep(2 + 3 * attempt)
+        left = [p for p in c.get_all_positions() if mine(p.symbol)]
+        if not left:
+            return []
+        for p in left:
             try:
                 c.close_position(p.symbol)
                 log.info("  bot #9 closed %s (%s) - %s", p.symbol, p.qty, reason)
             except Exception as e:
-                log.warning("  bot #9 could not close %s: %s", p.symbol, e)
+                log.warning("  bot #9 could not close %s (try %d of %d): %s", p.symbol, attempt + 1, tries,
+                            str(e)[:150])
+        time.sleep(3)
+    left = [p.symbol for p in c.get_all_positions() if mine(p.symbol)]
+    if left:
+        log.warning("  bot #9 STILL holds %s after %d tries (%s)", ", ".join(left), tries, reason)
+    return left
+
+
+def warn_left(left, reason):
+    """Tell Miles (once) if bot #9 could not close everything - nothing may stay over a weekend."""
+    if not left:
+        return
+    from . import notify
+    notify.send("bot #9 could not close everything",
+                f"⚠️ Bot #9 tried {reason} but still holds: {', '.join(left)}. The watchdog will retry "
+                "after the close (any leftover is closed at the next open at the latest). Bot #8 is not "
+                "affected.\n\nPaper money - not financial advice.", urgent=True)
 
 
 # ------------------------------------------------- practice / results ----
@@ -362,6 +386,10 @@ def session(watch_flag=False):
                     log.info("Bot #9: opening-volume history for %d stocks", len(avg_vol))
                 time.sleep(min(max((clock.next_open - now).total_seconds(), 5), 600))
                 continue
+            # Market closed: bot #9 never holds overnight, so anything of its own still here is a
+            # leftover - close it (queued for the next open if the market is shut).
+            if ok and any(mine(p.symbol) for p in c.get_all_positions()):
+                warn_left(flatten(c, "safety sweep (market closed)"), "a safety sweep of leftovers")
             break
         if st["done"]:
             break
@@ -389,7 +417,7 @@ def session(watch_flag=False):
                 pnl = live.own_day_pnl(c, day, mine)
                 if st.get("budget") and pnl <= -config.SIP_DAILY_STOP_PCT * st["budget"]:
                     log.warning("Bot #9 daily loss stop hit (%.2f): closing its trades for today.", pnl)
-                    flatten(c, "daily loss stop")
+                    warn_left(flatten(c, "daily loss stop"), "to close for the daily loss stop")
                     st.update(done=True, halted=True)
                     save_json(STATE, st)
                     break
@@ -397,7 +425,7 @@ def session(watch_flag=False):
                 log.warning("Bot #9 manage failed (retrying): %s", str(e)[:150])
         if clock.next_close - now <= timedelta(minutes=config.FLATTEN_MINUTES_BEFORE_CLOSE):
             if not practice:
-                flatten(c)
+                warn_left(flatten(c), "to close everything before the bell")
             st["done"] = True
             save_json(STATE, st)
             break

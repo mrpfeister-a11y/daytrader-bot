@@ -345,7 +345,12 @@ class SipClient:
         self.cancelled.append(self.orders[str(i)].symbol)
         self.orders[str(i)].status = Obj(value="canceled")
 
+    refuse_close = 0                                 # how many close requests Alpaca refuses first
+
     def close_position(self, sym):
+        if self.refuse_close > 0:
+            self.refuse_close -= 1
+            raise RuntimeError("insufficient qty available for order (held for orders)")
         self.closed.append(sym)
         self.pos.pop(sym, None)
 
@@ -385,6 +390,22 @@ sip.flatten(sc)
 ok(sc.closed == ["ZZZA"] and "SPY" not in sc.cancelled and sc.pos == {"SPY": 10},
    "end of day: closes only its own stock - bot #8's SPY untouched")
 ok("ZZZA" in sc.cancelled, "end of day: its open stop-loss is cancelled")
+sc.pos["ZZZB"] = -40
+sc.refuse_close = 2
+left = sip.flatten(sc, "test")
+ok(left == [] and "ZZZB" not in sc.pos and sc.pos.get("SPY") == 10,
+   "end of day: a refused close is retried until nothing of bot #9's is left (bot #8's SPY kept)")
+sc.pos["ZZZB"] = 5
+sc.refuse_close = 99
+sent9, _send = [], notify.send
+notify.send = lambda title, msg, **k: sent9.append(title)
+left = sip.flatten(sc, "test", tries=2)
+sip.warn_left(left, "test")
+notify.send = _send
+ok(left == ["ZZZB"] and sent9 == ["bot #9 could not close everything"],
+   "if a stock still can't be closed it says which one and alerts Miles")
+sc.refuse_close = 0
+sc.pos.pop("ZZZB", None)
 pnl8 = live.own_day_pnl(sc, DAY9, live.is_dt)
 ok(abs(pnl8 - 500.0) < 1e-6, "bot #8's daily result counts only its own stocks")
 
@@ -429,6 +450,41 @@ ok(t9["mode"] == "practice" and t9["day"] == DAY9, "practice results saved for t
 sec, bad = review.bot9_section(DAY9, t9, {"dt": {}, "sip": {}})
 ok("PRACTICE" in sec and "Bot #9" in sec, "shared daily report has a bot #9 section")
 config.SIP_TRADE_FROM = "2026-11-27"
+
+# a full REAL trading day (fake account): entry -> fill -> stop-loss -> closed before the bell
+sip.save_json(sip.STATE, {})
+sip.save_json(sip.LEARNED, {})
+sc3 = SipClient()
+live.client = lambda: sc3
+live.fills_today = lambda c, day: [o for o in c.orders.values() if o.status.value == "filled"]
+step = {"n": 0}
+
+
+def clock3():
+    step["n"] += 1
+    if step["n"] == 2:                               # between checks the breakout fills
+        sc3.fill("ZZZA", 51.02)
+    t = ny9.replace(hour=9, minute=36) if step["n"] <= 3 else ny9.replace(hour=15, minute=50)
+    return clock(True, t, ny9 + timedelta(days=1), ny9.replace(hour=16))
+
+
+sc3.get_clock = clock3
+sip.session()
+t3 = json.loads(sip.TODAY.read_text())
+ok(t3["mode"] == "trade" and [r["symbol"] for r in t3["results"]] == ["ZZZA"], "real day: trade recorded")
+ok(any(o.side.value == "sell" and o.symbol == "ZZZA" for o in sc3.orders.values()),
+   "real day: stop-loss placed after the entry filled")
+ok("ZZZA" in sc3.closed and sc3.pos == {"SPY": 10}, "real day: closed before the bell, bot #8's SPY untouched")
+
+# market closed with a leftover of bot #9's -> a session run sweeps it (never over a weekend)
+sip.save_json(sip.STATE, {})
+sc4 = SipClient()
+sc4.pos["ZZZA"] = 30
+live.client = lambda: sc4
+sat = ny9 + timedelta(days=4, hours=10)
+sc4.get_clock = lambda: clock(False, sat, sat + timedelta(days=2), sat + timedelta(days=2, hours=6))
+sip.session()
+ok(sc4.closed == ["ZZZA"] and sc4.pos == {"SPY": 10}, "market closed: leftover swept, bot #8's SPY untouched")
 
 print("10. backtest pieces")
 fr = pd.DataFrame({"ts": pd.date_range("2026-01-05 10:00", periods=8, freq="15min", tz="America/New_York"),

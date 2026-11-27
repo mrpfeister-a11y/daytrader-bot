@@ -41,8 +41,9 @@ instructions).
 - For bot #9 also check: `sip_today.json` has today's date; `sip_state.json` restarts/refused;
   after the close NO bot #9 position may be left (if `sip_today.json` mode is `trade`, any
   open non-UNIVERSE position at Alpaca would show in tomorrow's report - you can't see
-  Alpaca, so if bot #9 crashed after 3:45 PM ET, push `session` to requests/sip.txt: when the
-  market is closed its recover step sweeps leftovers).
+  Alpaca, so if bot #9 crashed near the close, or `logs/sip.log` says "could not close" / "STILL
+  holds", push `session` to requests/sip.txt: when the market is closed a session run sweeps
+  bot #9's leftovers - closing orders queue for the next open if needed).
 
 ## Market holidays are normal
 On a US market holiday (e.g. Thanksgiving) the bots see the market is closed and stop: no checks,
