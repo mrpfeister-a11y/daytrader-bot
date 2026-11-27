@@ -72,14 +72,19 @@ def wide(d: pd.DataFrame):
 
 
 # ---------------------------------------------------------------- the rule
-def signals(C, V, allowed: pd.Index):
-    """Score and eligibility for every day, using only that day's close and earlier."""
+def signals(C, V, allowed: pd.Index, biggest: int = 0):
+    """Score and eligibility for every day, using only that day's close and earlier.
+    biggest=N: only the N most-traded stocks THAT day (60-day dollar volume) - a no-hindsight
+    stand-in for "was in the S&P 1500 back then"."""
     C, V = C[allowed], V[allowed]
     mom = C.shift(21) / C.shift(252) - 1
     sma = C.rolling(200, min_periods=180).mean()
     dv = (C * V).rolling(20, min_periods=15).mean()
     jump = np.log(C / C.shift(1)).abs().rolling(252, min_periods=1).max()   # ticker reuse / bad data
     ok = (C >= 5) & (C <= 25) & (dv >= 5e6) & (C > sma) & mom.notna() & (jump < np.log(5))
+    if biggest:
+        dv60 = (C * V).rolling(60, min_periods=40).mean()
+        ok &= dv60.rank(axis=1, ascending=False) <= biggest
     return mom.where(ok)
 
 
@@ -221,12 +226,20 @@ def main() -> str:
     add("E. Honest, higher costs (0.25% per trade)", sc_all, slip_bps=25)
     add("F. Honest, no stop-loss", sc_all, stop=False)
     add("G. Honest, top 10 instead of top 5", sc_all, top=10)
+    add("H. Honest, only the 1,500 most-traded stocks at the time", signals(C, V, stocks, 1500))
+    add("I. Honest, only the 1,000 most-traded stocks at the time", signals(C, V, stocks, 1000))
+    add("J. Honest, only the 3,000 most-traded stocks at the time", signals(C, V, stocks, 3000))
 
     rand = []
     for seed in range(20):
         r, _ = simulate(sc_all, O, L, C, days, start=start, rng=np.random.default_rng(seed))
         rand.append(stats(r[r.index >= start])["cagr"])
     honest = stats(curves["D. HONEST: all US stocks incl. delisted/bankrupt"])["cagr"]
+    rand_sp = []
+    if sc_sp is not None:
+        for seed in range(20):
+            r, _ = simulate(sc_sp, O, L, C, days, start=start, rng=np.random.default_rng(seed))
+            rand_sp.append(stats(r[r.index >= start])["cagr"])
     s_full, s_ly = stats(spy_r), stats(spy_r[spy_r.index >= year_ago])
 
     years = sorted({x.year for x in spy_r.index})
@@ -256,6 +269,9 @@ def main() -> str:
         "",
         f"Random 5 stocks from the same honest list (20 tries): median {np.median(rand):+.1f}%/yr, "
         f"range {min(rand):+.1f}% to {max(rand):+.1f}%. The rule beat {sum(x < honest for x in rand)} of 20.",
+        (f"Random 5 stocks from TODAY's S&P 1500 list (same filters, 20 tries): median "
+         f"{np.median(rand_sp):+.1f}%/yr, range {min(rand_sp):+.1f}% to {max(rand_sp):+.1f}%."
+         if rand_sp else ""),
         "",
         "## Year by year",
         *yr_lines,
