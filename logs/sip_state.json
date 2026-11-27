@@ -1,7 +1,366 @@
 {
- "day": "2026-11-26",
- "orders": {},
- "picked": false,
- "done": false,
- "restarts": {}
+ "day": "2026-11-27",
+ "orders": {
+  "GLUE": {
+   "side": -1,
+   "qty": 155,
+   "level": 8.81,
+   "atr": 0.6130714285714286,
+   "entry_id": "f08a4fb3-1f13-4d82-9915-f1f8a5d26919",
+   "stop_id": "9f473099-92d4-475a-8588-64c36f7656be",
+   "fill": 8.79,
+   "stop": 8.85,
+   "filled_qty": 155
+  },
+  "AEE": {
+   "side": 1,
+   "qty": 11,
+   "level": 115.36,
+   "atr": 1.861064285714287,
+   "entry_id": "824827d4-5340-4446-99a5-5188ed151e62",
+   "stop_id": null,
+   "fill": null
+  },
+  "ALKS": {
+   "side": -1,
+   "qty": 27,
+   "level": 50.57,
+   "atr": 1.9615642857142848,
+   "entry_id": "b72a6b7a-23c0-45a5-b177-cb9c6da2fa32",
+   "stop_id": "closed-instead",
+   "fill": 50.4,
+   "filled_qty": 27
+  },
+  "ENPH": {
+   "side": -1,
+   "qty": 63,
+   "level": 21.48,
+   "atr": 1.7810285714285714,
+   "entry_id": "2a164170-30bf-4c6d-b381-44f53efe1c1c",
+   "stop_id": "fa29889f-7857-4cca-81e0-b2cee3af2be6",
+   "fill": 21.426667,
+   "stop": 21.6,
+   "filled_qty": 63
+  },
+  "VRTX": {
+   "side": -1,
+   "qty": 2,
+   "level": 506.69,
+   "atr": 15.754807142857137,
+   "entry_id": "361eb057-99a0-42f7-b53e-947fb5475fcf",
+   "stop_id": "closed-instead",
+   "fill": 506.5,
+   "filled_qty": 2
+  },
+  "XP": {
+   "side": -1,
+   "qty": 81,
+   "level": 16.78,
+   "atr": 0.7426142857142857,
+   "entry_id": "1a6c3158-6db4-47cc-8c1f-f10452cf32d8",
+   "stop_id": "f9472568-97f1-496e-9e19-9d8f1e3a6913",
+   "fill": 16.753827,
+   "stop": 16.83,
+   "filled_qty": 81
+  },
+  "VFLO": {
+   "side": 1,
+   "qty": 27,
+   "level": 50.56,
+   "atr": 1.0482285714285726,
+   "entry_id": "6f559099-aecd-4b39-9d58-1b25de31b8e4",
+   "stop_id": "d616510f-41cd-4f4d-a5f3-b2e25d490c3f",
+   "fill": 50.57,
+   "stop": 50.47,
+   "filled_qty": 27
+  },
+  "EQH": {
+   "side": 1,
+   "qty": 25,
+   "level": 54.39,
+   "atr": 1.8624357142857144,
+   "entry_id": "1534f3cb-728e-4999-89fc-4e5d885d489d",
+   "stop_id": "b0c03223-bf25-4d10-aea4-51f33fb0a4e9",
+   "fill": 54.44,
+   "stop": 54.25,
+   "filled_qty": 25
+  },
+  "HSAI": {
+   "side": 1,
+   "qty": 102,
+   "level": 13.32,
+   "atr": 0.857485714285714,
+   "entry_id": "385f1534-fe30-4efa-9255-50239180c9e0",
+   "stop_id": null,
+   "fill": null
+  },
+  "RLAY": {
+   "side": -1,
+   "qty": 75,
+   "level": 18.2,
+   "atr": 1.2328499999999996,
+   "entry_id": "244419a1-027d-47c9-ad0e-e71426a849d7",
+   "stop_id": "closed-instead",
+   "fill": 18.09,
+   "filled_qty": 75
+  },
+  "KNTK": {
+   "side": -1,
+   "qty": 23,
+   "level": 58.62,
+   "atr": 1.7153499999999997,
+   "entry_id": "253a58e8-cb9a-456a-af6f-2130ac2d2fc8",
+   "stop_id": null,
+   "fill": null
+  },
+  "ERO": {
+   "side": -1,
+   "qty": 66,
+   "level": 20.54,
+   "atr": 1.8687642857142859,
+   "entry_id": "60583c9d-171b-45a3-85c2-4c201b5b20c3",
+   "stop_id": "a8ada75f-ff68-4cf2-aee5-50de26a18ffc",
+   "fill": 20.505455,
+   "stop": 20.69,
+   "filled_qty": 66
+  },
+  "NTES": {
+   "side": 1,
+   "qty": 12,
+   "level": 108.18,
+   "atr": 4.021642857142859,
+   "entry_id": "c1627b17-84b3-480b-acac-95ee7cb79eab",
+   "stop_id": null,
+   "fill": null
+  },
+  "SEDG": {
+   "side": 1,
+   "qty": 65,
+   "level": 21.02,
+   "atr": 1.9500000000000006,
+   "entry_id": "e1d15fe8-7b83-477a-b7f6-29b21b168ae8",
+   "stop_id": "869855b5-40ce-4e3f-a2c7-135c6a04d745",
+   "fill": 21.084462,
+   "stop": 20.89,
+   "filled_qty": 65
+  },
+  "EUFN": {
+   "side": 1,
+   "qty": 36,
+   "level": 37.86,
+   "atr": 0.7610714285714296,
+   "entry_id": "a5c33fd7-32de-4984-93b5-aaac136a3f96",
+   "stop_id": "4e6cd8f7-5b41-4ef1-9e35-ad59dd99b5ac",
+   "fill": 37.87,
+   "stop": 37.79,
+   "filled_qty": 36
+  },
+  "MO": {
+   "side": 1,
+   "qty": 18,
+   "level": 75.57,
+   "atr": 1.6520214285714263,
+   "entry_id": "e2af13d0-b91d-4597-bcc1-098819c9e37d",
+   "stop_id": "9fd0ae63-7b1d-4903-b24b-d13ef7595f31",
+   "fill": 75.59,
+   "stop": 75.42,
+   "filled_qty": 18
+  }
+ },
+ "picked": true,
+ "done": true,
+ "restarts": {},
+ "picks": [
+  {
+   "symbol": "GLUE",
+   "side": -1,
+   "high": 8.875,
+   "low": 8.81,
+   "atr": 0.6130714285714286,
+   "rvol": 35.21,
+   "qty": 155
+  },
+  {
+   "symbol": "AEE",
+   "side": 1,
+   "high": 115.36,
+   "low": 114.88,
+   "atr": 1.861064285714287,
+   "rvol": 24.33,
+   "qty": 11
+  },
+  {
+   "symbol": "ALKS",
+   "side": -1,
+   "high": 51.15,
+   "low": 50.57,
+   "atr": 1.9615642857142848,
+   "rvol": 24.23,
+   "qty": 27
+  },
+  {
+   "symbol": "ENPH",
+   "side": -1,
+   "high": 21.94,
+   "low": 21.485,
+   "atr": 1.7810285714285714,
+   "rvol": 16.2,
+   "qty": 63
+  },
+  {
+   "symbol": "VRTX",
+   "side": -1,
+   "high": 520.445,
+   "low": 506.695,
+   "atr": 15.754807142857137,
+   "rvol": 16.06,
+   "qty": 2
+  },
+  {
+   "symbol": "XP",
+   "side": -1,
+   "high": 17.325,
+   "low": 16.78,
+   "atr": 0.7426142857142857,
+   "rvol": 15.61,
+   "qty": 81
+  },
+  {
+   "symbol": "VFLO",
+   "side": 1,
+   "high": 50.56,
+   "low": 50.49,
+   "atr": 1.0482285714285726,
+   "rvol": 13.28,
+   "qty": 27
+  },
+  {
+   "symbol": "EQH",
+   "side": 1,
+   "high": 54.39,
+   "low": 53.9,
+   "atr": 1.8624357142857144,
+   "rvol": 13.28,
+   "qty": 25
+  },
+  {
+   "symbol": "UPBD",
+   "side": 1,
+   "high": 27.65,
+   "low": 27.205,
+   "atr": 1.1608499999999995,
+   "rvol": 11.82,
+   "qty": 49
+  },
+  {
+   "symbol": "HSAI",
+   "side": 1,
+   "high": 13.32,
+   "low": 12.98,
+   "atr": 0.857485714285714,
+   "rvol": 11.36,
+   "qty": 102
+  },
+  {
+   "symbol": "RLAY",
+   "side": -1,
+   "high": 18.45,
+   "low": 18.2,
+   "atr": 1.2328499999999996,
+   "rvol": 10.77,
+   "qty": 75
+  },
+  {
+   "symbol": "KNTK",
+   "side": -1,
+   "high": 59.75,
+   "low": 58.62,
+   "atr": 1.7153499999999997,
+   "rvol": 10.54,
+   "qty": 23
+  },
+  {
+   "symbol": "ERO",
+   "side": -1,
+   "high": 21.11,
+   "low": 20.54,
+   "atr": 1.8687642857142859,
+   "rvol": 10.21,
+   "qty": 66
+  },
+  {
+   "symbol": "NTES",
+   "side": 1,
+   "high": 108.18,
+   "low": 107.58,
+   "atr": 4.021642857142859,
+   "rvol": 8.9,
+   "qty": 12
+  },
+  {
+   "symbol": "SEDG",
+   "side": 1,
+   "high": 21.02,
+   "low": 20.49,
+   "atr": 1.9500000000000006,
+   "rvol": 8.21,
+   "qty": 65
+  },
+  {
+   "symbol": "HAYW",
+   "side": 1,
+   "high": 16.9,
+   "low": 16.72,
+   "atr": 0.5807142857142858,
+   "rvol": 7.86,
+   "qty": 81
+  },
+  {
+   "symbol": "OVV",
+   "side": 1,
+   "high": 62.325,
+   "low": 62.25,
+   "atr": 1.9260214285714292,
+   "rvol": 7.66,
+   "qty": 22
+  },
+  {
+   "symbol": "EUFN",
+   "side": 1,
+   "high": 37.86,
+   "low": 37.76,
+   "atr": 0.7610714285714296,
+   "rvol": 7.64,
+   "qty": 36
+  },
+  {
+   "symbol": "YPF",
+   "side": -1,
+   "high": 33.92,
+   "low": 33.23,
+   "atr": 1.7078857142857142,
+   "rvol": 7.63,
+   "qty": 41
+  },
+  {
+   "symbol": "MO",
+   "side": 1,
+   "high": 75.57,
+   "low": 74.75,
+   "atr": 1.6520214285714263,
+   "rvol": 7.43,
+   "qty": 18
+  }
+ ],
+ "budget": 27436.855,
+ "refused": [
+  "UPBD",
+  "HAYW",
+  "OVV",
+  "YPF",
+  "VRTX",
+  "RLAY",
+  "ALKS"
+ ],
+ "finished": true
 }

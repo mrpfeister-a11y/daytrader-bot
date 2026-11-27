@@ -1,226 +1,134 @@
 {
- "day": "2026-11-25",
- "mode": "practice",
+ "day": "2026-11-27",
+ "mode": "trade",
  "results": [
   {
-   "symbol": "NTNX",
-   "side": -1,
-   "level": 43.98,
-   "triggered": true,
-   "fill": 43.98,
-   "exit": 44.3172,
-   "stopped": true,
-   "qty": 31,
-   "pnl": -11.82
-  },
-  {
-   "symbol": "PHM",
-   "side": -1,
-   "level": 131.88,
-   "triggered": true,
-   "fill": 131.795,
-   "exit": 132.2137,
-   "stopped": true,
-   "qty": 10,
-   "pnl": -5.51
-  },
-  {
-   "symbol": "AMBA",
-   "side": -1,
-   "level": 30.6,
-   "triggered": false,
-   "pnl": 0.0
-  },
-  {
-   "symbol": "VSH",
-   "side": -1,
-   "level": 20.69,
-   "triggered": true,
-   "fill": 20.67,
-   "exit": 20.8994,
-   "stopped": true,
-   "qty": 66,
-   "pnl": -16.51
-  },
-  {
-   "symbol": "COLD",
+   "symbol": "MO",
    "side": 1,
-   "level": 16.2,
+   "level": 75.57,
+   "fill": 75.59,
    "triggered": true,
-   "fill": 16.2,
-   "exit": 16.1453,
-   "stopped": true,
-   "qty": 84,
-   "pnl": -5.95
+   "pnl": 20.88,
+   "slippage_bps": 2.65
   },
   {
-   "symbol": "WDAY",
+   "symbol": "SEDG",
    "side": 1,
-   "level": 181.275,
+   "level": 21.02,
+   "fill": 21.084462,
    "triggered": true,
-   "fill": 181.76,
-   "exit": 181.0064,
-   "stopped": true,
-   "qty": 7,
-   "pnl": -6.54
+   "pnl": -13.94,
+   "slippage_bps": 30.67
   },
   {
-   "symbol": "FDMT",
+   "symbol": "ALKS",
+   "side": -1,
+   "level": 50.57,
+   "fill": 50.4,
+   "triggered": true,
+   "pnl": -7.56,
+   "slippage_bps": 33.62
+  },
+  {
+   "symbol": "EUFN",
    "side": 1,
-   "level": 11.32,
+   "level": 37.86,
+   "fill": 37.87,
    "triggered": true,
-   "fill": 11.32,
-   "exit": 11.2297,
-   "stopped": true,
-   "qty": 121,
-   "pnl": -12.3
+   "pnl": -3.24,
+   "slippage_bps": 2.64
   },
   {
-   "symbol": "DAR",
+   "symbol": "GLUE",
+   "side": -1,
+   "level": 8.81,
+   "fill": 8.79,
+   "triggered": true,
+   "pnl": -12.69,
+   "slippage_bps": 22.7
+  },
+  {
+   "symbol": "ERO",
+   "side": -1,
+   "level": 20.54,
+   "fill": 20.505455,
+   "triggered": true,
+   "pnl": -14.7,
+   "slippage_bps": 16.82
+  },
+  {
+   "symbol": "XP",
+   "side": -1,
+   "level": 16.78,
+   "fill": 16.753827,
+   "triggered": true,
+   "pnl": -7.79,
+   "slippage_bps": 15.6
+  },
+  {
+   "symbol": "ENPH",
+   "side": -1,
+   "level": 21.48,
+   "fill": 21.426667,
+   "triggered": true,
+   "pnl": -16.59,
+   "slippage_bps": 24.83
+  },
+  {
+   "symbol": "EQH",
    "side": 1,
-   "level": 48.17,
+   "level": 54.39,
+   "fill": 54.44,
    "triggered": true,
-   "fill": 48.17,
-   "exit": 47.9346,
-   "stopped": true,
-   "qty": 28,
-   "pnl": -7.94
+   "pnl": -7.5,
+   "slippage_bps": 9.19
   },
   {
-   "symbol": "BNTX",
+   "symbol": "RLAY",
    "side": -1,
-   "level": 88.235,
+   "level": 18.2,
+   "fill": 18.09,
    "triggered": true,
-   "fill": 87.99,
-   "exit": 88.2689,
-   "stopped": true,
-   "qty": 15,
-   "pnl": -5.51
+   "pnl": -9.0,
+   "slippage_bps": 60.44
   },
   {
-   "symbol": "SFNC",
-   "side": -1,
-   "level": 21.59,
-   "triggered": true,
-   "fill": 21.59,
-   "exit": 21.6546,
-   "stopped": true,
-   "qty": 63,
-   "pnl": -5.43
-  },
-  {
-   "symbol": "XOVR",
-   "side": -1,
-   "level": 17.99,
-   "triggered": true,
-   "fill": 17.96,
-   "exit": 18.0321,
-   "stopped": true,
-   "qty": 76,
-   "pnl": -6.85
-  },
-  {
-   "symbol": "HPQ",
+   "symbol": "VFLO",
    "side": 1,
-   "level": 32.035,
-   "triggered": false,
-   "pnl": 0.0
+   "level": 50.56,
+   "fill": 50.57,
+   "triggered": true,
+   "pnl": -3.24,
+   "slippage_bps": 1.98
   },
   {
-   "symbol": "CBRE",
+   "symbol": "VRTX",
    "side": -1,
-   "level": 132.99,
+   "level": 506.69,
+   "fill": 506.5,
    "triggered": true,
-   "fill": 132.81,
-   "exit": 133.2035,
-   "stopped": true,
-   "qty": 10,
-   "pnl": -5.26
-  },
-  {
-   "symbol": "WCN",
-   "side": 1,
-   "level": 185.075,
-   "triggered": true,
-   "fill": 185.25,
-   "exit": 187.685,
-   "stopped": false,
-   "qty": 7,
-   "pnl": 15.74
-  },
-  {
-   "symbol": "VTR",
-   "side": -1,
-   "level": 87.24,
-   "triggered": true,
-   "fill": 87.22,
-   "exit": 87.3948,
-   "stopped": true,
-   "qty": 15,
-   "pnl": -3.93
-  },
-  {
-   "symbol": "IFF",
-   "side": 1,
-   "level": 85.18,
-   "triggered": true,
-   "fill": 85.23,
-   "exit": 84.9901,
-   "stopped": true,
-   "qty": 16,
-   "pnl": -5.2
-  },
-  {
-   "symbol": "QDEL",
-   "side": 1,
-   "level": 8.23,
-   "triggered": true,
-   "fill": 8.28,
-   "exit": 8.1758,
-   "stopped": true,
-   "qty": 166,
-   "pnl": -18.67
-  },
-  {
-   "symbol": "AEO",
-   "side": -1,
-   "level": 22.005,
-   "triggered": true,
-   "fill": 22.0,
-   "exit": 22.1002,
-   "stopped": true,
-   "qty": 62,
-   "pnl": -7.58
-  },
-  {
-   "symbol": "ALLY",
-   "side": -1,
-   "level": 36.825,
-   "triggered": false,
-   "pnl": 0.0
-  },
-  {
-   "symbol": "MT",
-   "side": -1,
-   "level": 55.28,
-   "triggered": true,
-   "fill": 55.27,
-   "exit": 55.5082,
-   "stopped": true,
-   "qty": 24,
-   "pnl": -7.05
+   "pnl": -3.49,
+   "slippage_bps": 3.75
   }
  ],
- "budget": 27424.545,
+ "budget": 27436.855,
  "params": {
   "top_n": 20,
   "stop_atr": 0.1
  },
  "leverage": 1.0,
  "learned": {
-  "slippage_bps": null,
-  "real_days": 0,
-  "real_total_pct": 0
+  "slippage_bps": 16.21,
+  "real_days": 1,
+  "real_total_pct": -0.29
  },
- "refused": []
+ "refused": [
+  "UPBD",
+  "HAYW",
+  "OVV",
+  "YPF",
+  "VRTX",
+  "RLAY",
+  "ALKS"
+ ]
 }

@@ -6,9 +6,16 @@
    "pct": -0.424,
    "trades": 17,
    "won": 1
+  },
+  "2026-11-27": {
+   "mode": "trade",
+   "pnl": -78.86,
+   "pct": -0.287,
+   "trades": 12,
+   "won": 1
   }
  },
- "slippage_bps": null,
- "real_days": 0,
- "real_total_pct": 0
+ "slippage_bps": 16.21,
+ "real_days": 1,
+ "real_total_pct": -0.29
 }
